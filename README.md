@@ -6,18 +6,18 @@ This is a template for Python projects.
 
 ### Python
 
-We use Python \<version>, so make sure you have that installed.
+We use Python 3.11, so make sure you have that installed.
 
 You could use [pyenv](https://github.com/pyenv/pyenv) or [pyenv-win](https://github.com/pyenv-win/pyenv-win) (Windows is not recommended to install pyenv because it does not get native support) to manage your Python versions.
 
 Install the Python version you want to use.
 ```bash
-pyenv install <version>
+pyenv install 3.11
 ```
 
 Specify the version for this directory.
 ```bash
-pyenv local <version>
+pyenv local 3.11
 ```
 
 To check your Python version, run `python --version` in your terminal.
@@ -65,6 +65,85 @@ When you want to deactivate the virtual environment.
 ```bash
 deactivate
 ```
+
+### Environment Variables
+
+Make a copy of the `.env.example` file and rename it to `.env`.
+```bash
+cp .env.example .env
+```
+
+Fill in the environment variables in the `.env` file.
+
+## Running the Project
+
+There are 2 ways to run the project, using Docker, or using the database + Django locally.
+
+The production environment is deployed using Docker. However, you can also use the database + Django locally for development because it is the same build as the production environment.
+
+### Docker
+
+You can skip the database and Django setup if you use [Docker](https://www.docker.com).
+
+You have to make sure the environment variables in the `.env` file are set correctly, the port is set to 5433 in `docker-compose.yml` file to avoid conflict with the local database.
+```bash
+# Windows
+DB_HOST = host.docker.internal
+DB_PORT = 5433
+# Linux, Mac OS X
+DB_HOST = 127.17.0.1    # or any IP address you set explicitly
+DB_PORT = 5433
+```
+
+Make sure you have Docker installed.
+```bash
+docker --version
+```
+
+Also make sure you have [Docker Compose](https://docs.docker.com/compose) installed.
+```bash
+docker-compose --version
+```
+
+Run and build the images.
+```bash
+docker-compose up
+```
+
+Despite `verbose-adventure-web-1` says server is at http://0.0.0.0:8000/, you should use http://localhost:8001/ defined in the `docker-compose.yml` file.
+
+When you want to stop the containers.
+```bash
+docker-compose down
+```
+
+### Database + Django
+
+Use [PostgreSQL](https://www.postgresql.org) as the database.
+
+You have to make sure the environment variables in the `.env` file are set correctly.
+```bash
+DB_HOST = localhost
+DB_PORT = 5432          # default postgresql port
+```
+
+Run the Django migrations.
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+Create a superuser.
+```bash
+python manage.py createsuperuser
+```
+
+Run the server.
+```bash
+python manage.py runserver
+```
+
+## Code Style Enforcement
 
 ### Lint and Pre-commit
 
@@ -116,7 +195,7 @@ Then replace the content with the following:
 
 First clone the repository.
 ```bash
-git clone git@github.com:<username>/<repository>.git
+git clone git@github.com:lioqing/chat_composer.git
 ```
 
 **Important**: You may need to setup SSH keys for your GitHub account. See [this guide](https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh) for more information.
