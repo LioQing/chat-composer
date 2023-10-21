@@ -1,6 +1,19 @@
-from rest_framework import permissions, response, views
+import logging
 
-from . import serializers
+from rest_framework import (
+    exceptions,
+    generics,
+    permissions,
+    response,
+    views,
+    viewsets,
+)
+
+import engine.pipeline
+from config.logger import logger_config
+from rest_auth import permissions as rest_auth_permissions
+
+from . import models, serializers
 
 
 class PingPongView(views.APIView):
@@ -14,3 +27,186 @@ class PingPongView(views.APIView):
         serializer = self.serializer_class(data={"ping": "pong"})
         serializer.is_valid(raise_exception=True)
         return response.Response(serializer.data)
+
+
+class UserView(
+    generics.CreateAPIView,
+    generics.RetrieveAPIView,
+    generics.ListAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView,
+    viewsets.GenericViewSet,
+):
+    """Viewset for the User model"""
+
+    queryset = models.User.objects.all()
+    serializer_class = serializers.UserSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def perform_create(self, serializer: serializers.UserSerializer):
+        """Create the user"""
+        user: models.User = serializer.save()
+        user.set_password(user.password)
+        user.save()
+
+    def perform_update(self, serializer: serializers.UserSerializer):
+        """Update the user"""
+        user: models.User = serializer.save()
+
+        if serializer.validated_data.get("password"):
+            user.set_password(user.password)
+            user.save()
+
+
+class UserWhitelistView(generics.CreateAPIView, views.APIView):
+    """View for whitelisting a user"""
+
+    serializer_class = serializers.UserWhitelistSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def create(self, request, *args, **kwargs):
+        """Whitelist the user"""
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            username: str = serializer.validated_data["username"]
+            whitelist: bool = serializer.validated_data["whitelist"]
+
+            user = models.User.objects.get(username=username)
+            user.is_whitelisted = whitelist
+            user.save()
+            return response.Response(serializer.data)
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc()
+            logger = logging.getLogger(__name__)
+            logger.error(e)
+            raise e
+
+
+class ComponentView(
+    generics.CreateAPIView,
+    generics.RetrieveAPIView,
+    generics.ListAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView,
+    viewsets.GenericViewSet,
+):
+    """Viewset for the Component model"""
+
+    queryset = models.Component.objects.all()
+    serializer_class = serializers.ComponentSerializer
+    permission_classes = [rest_auth_permissions.IsWhitelisted]
+
+    def get_queryset(self):
+        """Return the queryset"""
+        if self.request.user.is_superuser or self.request.method == "GET":
+            return self.queryset
+
+        return self.queryset.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        """Create the component"""
+        user: models.User = serializer.validated_data["user"]
+        if not user.is_superuser and user != self.request.user:
+            raise exceptions.PermissionDenied(
+                "You do not have permission to create a component for other"
+                " user"
+            )
+        serializer.save()
+
+
+class PipelineView(
+    generics.CreateAPIView,
+    generics.RetrieveAPIView,
+    generics.ListAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView,
+    viewsets.GenericViewSet,
+):
+    """Viewset for the Pipeline model"""
+
+    queryset = models.Pipeline.objects.all()
+    serializer_class = serializers.PipelineSerializer
+    permission_classes = [rest_auth_permissions.IsWhitelisted]
+
+    def get_queryset(self):
+        """Return the queryset"""
+        if self.request.user.is_superuser or self.request.method == "GET":
+            return self.queryset
+
+        return self.queryset.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        """Create the pipeline"""
+        user: models.User = serializer.validated_data["user"]
+        if not user.is_superuser and user != self.request.user:
+            raise exceptions.PermissionDenied(
+                "You do not have permission to create a pipeline for other"
+                " user"
+            )
+        serializer.save()
+
+
+class PipelineComponentView(
+    generics.CreateAPIView,
+    generics.RetrieveAPIView,
+    generics.ListAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView,
+    viewsets.GenericViewSet,
+):
+    """Viewset for the PipelineComponent model"""
+
+    queryset = models.PipelineComponent.objects.all()
+    serializer_class = serializers.PipelineComponentSerializer
+    permission_classes = [rest_auth_permissions.IsWhitelisted]
+
+    def get_queryset(self):
+        """Return the queryset"""
+        if self.request.user.is_superuser or self.request.method == "GET":
+            return self.queryset
+
+        return self.queryset.filter(pipeline__user=self.request.user)
+
+    def perform_create(self, serializer):
+        """Create the pipeline component"""
+        user: models.User = serializer.validated_data["pipeline"].user
+        if not user.is_superuser and user != self.request.user:
+            raise exceptions.PermissionDenied(
+                "You do not have permission to create a pipeline component for"
+                " other user"
+            )
+        serializer.save()
+
+
+class PipelineRunView(generics.CreateAPIView, views.APIView):
+    """View to run the pipeline"""
+
+    serializer_class = serializers.PipelineRunSerializer
+    permission_classes = [rest_auth_permissions.IsWhitelisted]
+
+    def create(self, request, id: int, *args, **kwargs):
+        """Run the pipeline"""
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logger_config.level)
+
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user_message: str = serializer.validated_data["user_message"]
+
+            pipeline: models.Pipeline = models.Pipeline.objects.get(id=id)
+            pipeline_response = engine.pipeline.run(pipeline, user_message)
+
+            serializer.validated_data["response"] = pipeline_response
+            logger.debug("serializer: %s", serializer)
+            return response.Response(serializer.data)
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc()
+            logger = logging.getLogger(__name__)
+            logger.error(e)
+            raise e

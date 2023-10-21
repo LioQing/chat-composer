@@ -2,6 +2,40 @@
 
 This is a template for Python projects.
 
+## Graphs
+
+### ER Diagram
+```mermaid
+erDiagram
+    User {
+        Boolean is_whitelisted
+    }
+
+    Component {
+        ManyToOne(User) user FK
+        Text name
+        Text code
+        JSON state
+    }
+
+    Pipeline {
+        ManyToOne(User) user FK
+        ManyToMany(Component) components FK "through PipelineComponent"
+        Text name
+    }
+
+    PipelineComponent {
+        ManyToOne(Pipeline) pipeline FK
+        ManyToOne(Component) component FK
+        PositiveInteger order
+    }
+
+    User ||--o{ Pipeline : owns
+    User ||--o{ Component : creates
+    Pipeline }|--|| PipelineComponent : defines
+    Component }|--|| PipelineComponent : refers
+```
+
 ## Environment Setup
 
 ### Python
