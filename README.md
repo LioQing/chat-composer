@@ -14,26 +14,33 @@ erDiagram
     Component {
         ManyToOne(User) user FK
         Text name
+        Text function_name
+        JSON description
         Text code
         JSON state
+        Boolean is_template
+        DateTime created_at
     }
 
     Pipeline {
         ManyToOne(User) user FK
-        ManyToMany(Component) components FK "through PipelineComponent"
+        ManyToMany(Component) components FK "through ComponentInstance"
         Text name
+        Boolean is_active
+        DateTime created_at
     }
 
-    PipelineComponent {
+    ComponentInstance {
         ManyToOne(Pipeline) pipeline FK
         ManyToOne(Component) component FK
+        Boolean is_enabled
         PositiveInteger order
     }
 
     User ||--o{ Pipeline : owns
     User ||--o{ Component : creates
-    Pipeline }|--|| PipelineComponent : defines
-    Component }|--|| PipelineComponent : refers
+    Pipeline }|--|| ComponentInstance : defines
+    Component }|--o| ComponentInstance : refers
 ```
 
 ## Environment Setup

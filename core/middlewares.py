@@ -1,4 +1,5 @@
 import logging
+from typing import Callable
 
 from django.http import HttpRequest, HttpResponse
 
@@ -9,9 +10,9 @@ class RequestLogMiddleware:
     """Log the request"""
 
     logger: logging.Logger
-    get_response: callable
+    get_response: Callable[[HttpRequest], HttpResponse]
 
-    def __init__(self, get_response):
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
         self.get_response = get_response
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logger_config.level)
@@ -27,10 +28,12 @@ class RequestLogMiddleware:
             "request_body": request.body,
         }
 
+        response: HttpResponse = self.get_response(request)
         if request.method != "DELETE":
-            response: HttpResponse = self.get_response(request)
-
-            if response["content-type"] == "application/json":
+            if (
+                response.has_header("content-type")
+                and response["content-type"] == "application/json"
+            ):
                 if getattr(response, "streaming", False):
                     response_body = "<<<Streaming>>>"
                 else:

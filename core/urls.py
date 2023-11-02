@@ -7,7 +7,7 @@ router = routers.SimpleRouter()
 router.register(r"model/user", views.UserView)
 router.register(r"model/component", views.ComponentView)
 router.register(r"model/pipeline", views.PipelineView)
-router.register(r"model/pipeline-component", views.PipelineComponentView)
+router.register(r"model/component-instance", views.ComponentInstanceView)
 
 run_urlpatterns = [
     path(
@@ -17,17 +17,8 @@ run_urlpatterns = [
     ),
 ]
 
-admin_action_urlpatterns = [
-    path(
-        "user/whitelist/",
-        views.UserWhitelistView.as_view(),
-        name="user-whitelist",
-    ),
-]
-
 urlpatterns = [
     *router.urls,
     *run_urlpatterns,
-    *admin_action_urlpatterns,
     path("ping", views.PingPongView.as_view(), name="ping"),
 ]

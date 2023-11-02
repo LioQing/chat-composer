@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 
-def validate_component_name(value: str):
+def validate_function_name(value: str):
     """Validate component name"""
     if not value.isidentifier():
         raise ValidationError(

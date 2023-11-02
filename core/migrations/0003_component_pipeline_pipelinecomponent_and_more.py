@@ -7,45 +7,96 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0002_user_is_whitelisted'),
+        ("core", "0002_user_is_whitelisted"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Component',
+            name="Component",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(validators=[core.validators.validate_component_name])),
-                ('code', models.TextField()),
-                ('state', models.JSONField(default=dict)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        validators=[core.validators.validate_function_name]
+                    ),
+                ),
+                ("code", models.TextField()),
+                ("state", models.JSONField(default=dict)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Pipeline',
+            name="Pipeline",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='PipelineComponent',
+            name="PipelineComponent",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('order', models.PositiveIntegerField()),
-                ('component', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.component')),
-                ('pipeline', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.pipeline')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("order", models.PositiveIntegerField()),
+                (
+                    "component",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="core.component",
+                    ),
+                ),
+                (
+                    "pipeline",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="core.pipeline",
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
-            model_name='pipeline',
-            name='components',
-            field=models.ManyToManyField(through='core.PipelineComponent', to='core.component'),
+            model_name="pipeline",
+            name="components",
+            field=models.ManyToManyField(
+                through="core.PipelineComponent", to="core.component"
+            ),
         ),
         migrations.AddField(
-            model_name='pipeline',
-            name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="pipeline",
+            name="user",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

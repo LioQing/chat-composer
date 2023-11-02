@@ -11,6 +11,7 @@ class DjangoConfig(BaseConfig):
     secret_key: str = Field()
     debug: bool = Field(False)
     allowed_hosts: List[str] = Field(["127.0.0.1", "localhost"])
+    cors_allowed_origins: List[str] = Field([])
 
     class Config:
         env_prefix = "DJANGO_"

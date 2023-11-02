@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "core.apps.CoreConfig",
+    "conductor.apps.ConductorConfig",
     "rest_auth.apps.RestAuthConfig",
 ]
 
@@ -54,7 +55,7 @@ MIDDLEWARE = [
     "core.middlewares.RequestLogMiddleware",
 ]
 
-CORS_ORIGIN_WHITELIST = ["http://localhost:3000"]
+CORS_ALLOWED_ORIGINS = django_config.cors_allowed_origins
 
 ROOT_URLCONF = "chat_composer.urls"
 
@@ -152,6 +153,7 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=90),
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "TOKEN_OBTAIN_SERIALIZER": "rest_auth.serializers.LoginSerializer",
 }
 
 # DRF spectacular settings

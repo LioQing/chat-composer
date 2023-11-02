@@ -22,12 +22,14 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+import conductor.urls
 import core.urls
 import rest_auth.urls
 
 urlpatterns = [
     path("", include(core.urls)),
     path("auth/", include(rest_auth.urls)),
+    path("conductor/", include(conductor.urls)),
     path("admin/", admin.site.urls),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

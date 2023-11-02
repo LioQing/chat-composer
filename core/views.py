@@ -11,7 +11,6 @@ from rest_framework import (
 
 import engine.pipeline
 from config.logger import logger_config
-from rest_auth import permissions as rest_auth_permissions
 
 from . import models, serializers
 
@@ -58,33 +57,6 @@ class UserView(
             user.save()
 
 
-class UserWhitelistView(generics.CreateAPIView, views.APIView):
-    """View for whitelisting a user"""
-
-    serializer_class = serializers.UserWhitelistSerializer
-    permission_classes = [permissions.IsAdminUser]
-
-    def create(self, request, *args, **kwargs):
-        """Whitelist the user"""
-        try:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            username: str = serializer.validated_data["username"]
-            whitelist: bool = serializer.validated_data["whitelist"]
-
-            user = models.User.objects.get(username=username)
-            user.is_whitelisted = whitelist
-            user.save()
-            return response.Response(serializer.data)
-        except Exception as e:
-            import traceback
-
-            traceback.print_exc()
-            logger = logging.getLogger(__name__)
-            logger.error(e)
-            raise e
-
-
 class ComponentView(
     generics.CreateAPIView,
     generics.RetrieveAPIView,
@@ -97,7 +69,7 @@ class ComponentView(
 
     queryset = models.Component.objects.all()
     serializer_class = serializers.ComponentSerializer
-    permission_classes = [rest_auth_permissions.IsWhitelisted]
+    permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
         """Return the queryset"""
@@ -127,9 +99,9 @@ class PipelineView(
 ):
     """Viewset for the Pipeline model"""
 
-    queryset = models.Pipeline.objects.all()
+    queryset = models.Pipeline.all_objects.all()
     serializer_class = serializers.PipelineSerializer
-    permission_classes = [rest_auth_permissions.IsWhitelisted]
+    permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
         """Return the queryset"""
@@ -149,7 +121,7 @@ class PipelineView(
         serializer.save()
 
 
-class PipelineComponentView(
+class ComponentInstanceView(
     generics.CreateAPIView,
     generics.RetrieveAPIView,
     generics.ListAPIView,
@@ -157,11 +129,11 @@ class PipelineComponentView(
     generics.UpdateAPIView,
     viewsets.GenericViewSet,
 ):
-    """Viewset for the PipelineComponent model"""
+    """Viewset for the ComponentInstance model"""
 
-    queryset = models.PipelineComponent.objects.all()
-    serializer_class = serializers.PipelineComponentSerializer
-    permission_classes = [rest_auth_permissions.IsWhitelisted]
+    queryset = models.ComponentInstance.objects.all()
+    serializer_class = serializers.ComponentInstanceSerializer
+    permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
         """Return the queryset"""
@@ -185,7 +157,7 @@ class PipelineRunView(generics.CreateAPIView, views.APIView):
     """View to run the pipeline"""
 
     serializer_class = serializers.PipelineRunSerializer
-    permission_classes = [rest_auth_permissions.IsWhitelisted]
+    permission_classes = [permissions.IsAdminUser]
 
     def create(self, request, id: int, *args, **kwargs):
         """Run the pipeline"""

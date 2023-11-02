@@ -17,13 +17,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class UserWhitelistSerializer(serializers.Serializer):
-    """Serializer for the UserWhitelistView"""
-
-    username = serializers.CharField(required=True)
-    whitelist = serializers.BooleanField(default=True)
-
-
 class ComponentSerializer(serializers.ModelSerializer):
     """Serializer for the Component model"""
 
@@ -47,9 +40,9 @@ class PipelineRunSerializer(serializers.Serializer):
     response = serializers.JSONField(read_only=True)
 
 
-class PipelineComponentSerializer(serializers.ModelSerializer):
-    """Serializer for the PipelineComponent model"""
+class ComponentInstanceSerializer(serializers.ModelSerializer):
+    """Serializer for the ComponentInstance model"""
 
     class Meta:
-        model = models.PipelineComponent
+        model = models.ComponentInstance
         fields = "__all__"
