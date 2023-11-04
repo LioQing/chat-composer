@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "core.apps.CoreConfig",
     "conductor.apps.ConductorConfig",
+    "oai.apps.OaiConfig",
     "rest_auth.apps.RestAuthConfig",
 ]
 
@@ -154,6 +155,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=90),
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "TOKEN_OBTAIN_SERIALIZER": "rest_auth.serializers.LoginSerializer",
+    "TOKEN_REFRESH_SERIALIZER": "rest_auth.serializers.TokenRefreshSerializer",
 }
 
 # DRF spectacular settings

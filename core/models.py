@@ -88,3 +88,13 @@ class ComponentInstance(models.Model):
 
     objects = managers.ActiveComponentInstanceManager()
     all_objects = models.Manager()
+
+
+class Chat(models.Model):
+    """Chat model"""
+
+    pipeline = models.ForeignKey(Pipeline, on_delete=models.CASCADE)
+    user_message = models.CharField()
+    api_message = models.CharField()
+    clear_history = models.BooleanField()
+    created_at = models.DateTimeField(auto_now_add=True)

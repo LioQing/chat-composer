@@ -145,8 +145,30 @@ class ConductorComponentSearchSerializer(serializers.ModelSerializer):
         )
 
 
+class ConductorPipelineSaveComponentInstanceSerializer(serializers.Serializer):
+    """Serializer for the ConductorPipelineSaveSerializer"""
+
+    id = serializers.IntegerField(required=True)
+    order = serializers.IntegerField(required=True)
+    is_enabled = serializers.BooleanField(required=True)
+    name = serializers.CharField(required=True)
+    function_name = serializers.CharField(required=True)
+    description = serializers.JSONField(required=True)
+    code = serializers.CharField(required=True)
+    state = serializers.JSONField(required=True)
+
+
+class ConductorPipelineSaveSerializer(serializers.Serializer):
+    """Serializer for the ConductorPipelineSaveView"""
+
+    name = serializers.CharField(required=True)
+    components = ConductorPipelineSaveComponentInstanceSerializer(
+        many=True, required=True
+    )
+
+
 class ConductorAccountSerializer(serializers.Serializer):
-    """Serializer for the AccountView"""
+    """Serializer for the ConductorAccountView"""
 
     id = serializers.IntegerField()
     username = serializers.CharField()
@@ -157,7 +179,28 @@ class ConductorAccountSerializer(serializers.Serializer):
 
 
 class ConductorAccountPasswordChangeSerializer(serializers.Serializer):
-    """Serializer for the AccountPasswordChangeView"""
+    """Serializer for the ConductorAccountPasswordChangeView"""
 
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+
+class ConductorChatSendSerializer(serializers.Serializer):
+    """Serializer for the ConductorChatSendView"""
+
+    user_message = serializers.CharField(required=True)
+    api_message = serializers.CharField(read_only=True)
+
+
+class ConductorChatHistorySerializer(serializers.ModelSerializer):
+    """Serializer for the ConductorChatHistoryView"""
+
+    class Meta:
+        model = models.Chat
+        fields = (
+            "id",
+            "user_message",
+            "api_message",
+            "clear_history",
+            "created_at",
+        )

@@ -1,33 +1,8 @@
-from enum import StrEnum
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, model_serializer
 
-
-class Role(StrEnum):
-    """Role enumeration for conversation messages"""
-
-    SYSTEM = "system"
-    USER = "user"
-    ASSISTANT = "assistant"
-    FUNCTION = "function"
-
-    def __repr__(self) -> str:
-        """Get the string representation of the role"""
-        return repr(self.value)
-
-
-class FinishReason(StrEnum):
-    """Finish reason enumeration for conversation messages"""
-
-    STOP = "stop"
-    LENGTH = "length"
-    CONTENT_FILTER = "content_filter"
-    FUNCTION_CALL = "function_call"
-
-    def __repr__(self) -> str:
-        """Get the string representation of the finish reason"""
-        return repr(self.value)
+from .enums import FinishReason, Role
 
 
 class FunctionCall(BaseModel):
@@ -152,7 +127,7 @@ class Function(BaseModel):
 
 
 class ChatcmplRequest(BaseModel):
-    """Chat completition request body"""
+    """Chat completion request body"""
 
     deployment_id: str
     messages: List[Message]

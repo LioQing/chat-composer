@@ -46,3 +46,11 @@ class ComponentInstanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ComponentInstance
         fields = "__all__"
+
+
+class ChatSerializer(serializers.ModelSerializer):
+    """Serializer for the Chat model"""
+
+    class Meta:
+        model = models.Chat
+        fields = "__all__"

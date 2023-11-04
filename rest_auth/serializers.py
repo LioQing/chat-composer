@@ -1,5 +1,8 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import (
+    TokenRefreshSerializer as jwtTokenRefreshSerializer,
+)
 
 
 class UsernameExistsSerializer(serializers.Serializer):
@@ -23,3 +26,10 @@ class LoginSerializer(TokenObtainPairSerializer):
     refresh = serializers.CharField(read_only=True)
     access_expiration = serializers.DateTimeField(read_only=True)
     refresh_expiration = serializers.DateTimeField(read_only=True)
+
+
+class TokenRefreshSerializer(jwtTokenRefreshSerializer):
+    """Serializer for the TokenRefreshView"""
+
+    access = serializers.CharField(read_only=True)
+    access_expiration = serializers.DateTimeField(read_only=True)

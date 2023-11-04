@@ -153,6 +153,38 @@ class ComponentInstanceView(
         serializer.save()
 
 
+class ChatView(
+    generics.CreateAPIView,
+    generics.RetrieveAPIView,
+    generics.ListAPIView,
+    generics.DestroyAPIView,
+    generics.UpdateAPIView,
+    viewsets.GenericViewSet,
+):
+    """Viewset for the Chat model"""
+
+    queryset = models.Chat.objects.all()
+    serializer_class = serializers.ChatSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_queryset(self):
+        """Return the queryset"""
+        if self.request.user.is_superuser or self.request.method == "GET":
+            return self.queryset
+
+        return self.queryset.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        """Create the chat"""
+        user: models.User = serializer.validated_data["pipeline"].user
+        if not user.is_superuser and user != self.request.user:
+            raise exceptions.PermissionDenied(
+                "You do not have permission to create a chat for other user's"
+                " pipeline"
+            )
+        serializer.save()
+
+
 class PipelineRunView(generics.CreateAPIView, views.APIView):
     """View to run the pipeline"""
 

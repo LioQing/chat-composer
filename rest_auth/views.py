@@ -81,4 +81,9 @@ class TokenRefreshView(jwt_views.TokenRefreshView):
 
     def post(self, request, *args, **kwargs):
         """Return access token"""
-        return super().post(request, *args, **kwargs)
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200:
+            response.data["access_expiration"] = timezone.now() + timedelta(
+                days=1
+            )
+        return response

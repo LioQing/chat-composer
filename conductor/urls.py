@@ -21,6 +21,10 @@ router.register(
     views.ConductorPipelineComponentInstanceDeleteView,
 )
 router.register(
+    r"chat/history/(?P<pk>\d+)",
+    views.ConductorChatHistoryView,
+)
+router.register(
     r"component/details",
     views.ConductorComponentDetailsView,
 )
@@ -31,6 +35,16 @@ urlpatterns = [
         "component/search/",
         views.ConductorComponentSearchView.as_view(),
         name="conductor-component-search",
+    ),
+    path(
+        "pipeline/save/<int:pk>/",
+        views.ConductorPipelineSaveView.as_view(),
+        name="conductor-pipeline-save",
+    ),
+    path(
+        "chat/send/<int:pk>/",
+        views.ConductorChatSendView.as_view(),
+        name="conductor-chat-send",
     ),
     path(
         "account/",

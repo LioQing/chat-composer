@@ -30,6 +30,14 @@ erDiagram
         DateTime created_at
     }
 
+    Chat {
+        ManyToOne(Pipeline) pipeline FK
+        Text user_message
+        Text api_message
+        Boolean is_first
+        DateTime created_at
+    }
+
     ComponentInstance {
         ManyToOne(Pipeline) pipeline FK
         ManyToOne(Component) component FK
@@ -37,10 +45,59 @@ erDiagram
         PositiveInteger order
     }
 
+    ChatcmplRequest {
+        JSON request
+        OneToOne(Chatcmpl) response FK
+        ManyToOne(Component) oai FK
+    }
+
+    Chatcmpl {
+        Text id PK
+        PositiveInteger created
+        Text model
+        Text object
+        OneToOne(Usage) usage FK
+    }
+
+    Choice {
+        ManyToOne(Chatcmpl) chatcmpl FK
+        Text finish_reason
+        PositiveInteger index
+        OneToOne(Message) message
+    }
+
+    Message {
+        Text content
+        Text name
+        OneToOne(FunctionCall) function_call FK
+        Text role
+    }
+
+    FunctionCall {
+        Text arguments
+        Text name
+    }
+
+    Usage {
+        PositiveInteger completion_tokens
+        PositiveInteger prompt_tokens
+        PositiveInteger total_tokens
+    }
+
     User ||--o{ Pipeline : owns
     User ||--o{ Component : creates
-    Pipeline }|--|| ComponentInstance : defines
-    Component }|--o| ComponentInstance : refers
+    Component ||--o| ComponentInstance : refers
+    Pipeline ||--o{ ComponentInstance : defines
+
+    Pipeline ||--o{ Chat : chat
+    Component ||--o{ ChatcmplRequest : requests
+
+    ChatcmplRequest ||--|| Chatcmpl : responds
+    Chatcmpl ||--|{ Choice : has
+    Choice ||--|| Message : contains
+    Message ||--o| FunctionCall : calls
+    Chatcmpl ||--|| Usage : uses
+
 ```
 
 ## Environment Setup
