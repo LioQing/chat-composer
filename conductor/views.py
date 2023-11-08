@@ -6,7 +6,9 @@ from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
 )
-from rest_framework import generics, views, viewsets
+from rest_framework import generics
+from rest_framework import permissions as rest_permissions
+from rest_framework import views, viewsets
 
 import engine.pipeline
 from config.logger import logger_config
@@ -300,18 +302,7 @@ class ConductorAccountView(
     def get(self, request: views.Request, *args, **kwargs):
         """Return the user's account information"""
         user = models.User.objects.get(id=request.user.id)
-        serializer = self.serializer_class(
-            data={
-                "id": user.id,
-                "username": user.username,
-                "name": user.first_name + " " + user.last_name,
-                "email": user.email,
-                "is_whitelisted": user.is_whitelisted,
-                "date_joined": user.date_joined,
-            }
-        )
-
-        serializer.is_valid(raise_exception=True)
+        serializer = self.serializer_class(user)
         return views.Response(serializer.data)
 
 
@@ -428,3 +419,71 @@ class ConductorChatHistoryView(
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)
         return self.get_paginated_response(serializer.data)
+
+
+class ConductorAdminWhitelistView(views.APIView):
+    """View for whitelisting a user"""
+
+    serializer_class = serializers.ConductorAdminWhitelistSerializer
+    permission_classes = [rest_permissions.IsAdminUser]
+
+    def patch(self, request: views.Request, *args, **kwargs):
+        """Whitelist the user"""
+        try:
+            serializer: serializers.ConductorAdminWhitelistSerializer = (
+                self.serializer_class(data=request.data)
+            )
+            serializer.is_valid(raise_exception=True)
+            username: str = serializer.validated_data["username"]
+            whitelist: bool = serializer.validated_data["whitelist"]
+
+            user = models.User.objects.get(username=username)
+            user.is_whitelisted = whitelist
+            user.save()
+            return views.Response(serializer.data)
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc()
+            logger = logging.getLogger(__name__)
+            logger.error(e)
+            raise e
+
+
+class ConductorAdminCreateUserView(
+    viewsets.GenericViewSet,
+):
+    """View for creating a user"""
+
+    queryset = models.User.objects.all()
+    serializer_class = serializers.ConductorAdminCreateUserSerializer
+    permission_classes = [rest_permissions.IsAdminUser]
+
+    def create(self, request: views.Request, *args, **kwargs):
+        """Create a user"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        password = models.User.objects.make_random_password()
+        user: models.User = serializer.save(password=password)
+        user.set_password(password)
+        user.save()
+
+        data = serializer.data
+        data["password"] = password
+        return views.Response(
+            data,
+            status=views.status.HTTP_201_CREATED,
+        )
+
+
+class ConductorAdminMakeTemplateView(
+    generics.UpdateAPIView,
+    viewsets.GenericViewSet,
+):
+    """View for making a component a template"""
+
+    queryset = models.Component.objects.all()
+    serializer_class = serializers.ConductorAdminMakeTemplateSerializer
+    permission_classes = [rest_permissions.IsAdminUser]
+    http_method_names = ["patch"]

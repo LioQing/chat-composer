@@ -19,6 +19,12 @@ class UserWhitelistSerializer(serializers.Serializer):
     whitelist = serializers.BooleanField(default=True)
 
 
+class IsAdminSerializer(serializers.Serializer):
+    """Serializer for the IsAdminView"""
+
+    is_admin = serializers.BooleanField()
+
+
 class LoginSerializer(TokenObtainPairSerializer):
     """Serializer for the LoginView"""
 

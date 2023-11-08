@@ -53,6 +53,20 @@ class UserWhitelistView(generics.CreateAPIView, views.APIView):
             raise e
 
 
+class IsAdminView(views.APIView):
+    """View for checking if user is admin"""
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.IsAdminSerializer
+
+    def get(self, request: views.Request):
+        """Return whether user is admin"""
+        user: User = request.user
+        serializer = self.serializer_class(data={"is_admin": user.is_staff})
+        serializer.is_valid(raise_exception=True)
+        return response.Response(serializer.data)
+
+
 class LoginView(jwt_views.TokenObtainPairView):
     """Obtain access and refresh token pair"""
 

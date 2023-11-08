@@ -28,6 +28,14 @@ router.register(
     r"component/details",
     views.ConductorComponentDetailsView,
 )
+router.register(
+    r"admin/create-user",
+    views.ConductorAdminCreateUserView,
+)
+router.register(
+    r"admin/make-template",
+    views.ConductorAdminMakeTemplateView,
+)
 
 urlpatterns = [
     *router.urls,
@@ -55,5 +63,10 @@ urlpatterns = [
         "account/password-change/",
         views.ConductorAccountPasswordChangeView.as_view(),
         name="conductor-account-password-change",
+    ),
+    path(
+        "admin/whitelist/",
+        views.ConductorAdminWhitelistView.as_view(),
+        name="conductor-admin-whitelist",
     ),
 ]

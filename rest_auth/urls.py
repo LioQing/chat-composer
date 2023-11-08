@@ -13,6 +13,7 @@ urlpatterns = [
         views.UserWhitelistView.as_view(),
         name="auth-user-whitelist",
     ),
+    path("is-admin/", views.IsAdminView.as_view(), name="auth-is-admin"),
     path("login/", views.LoginView.as_view(), name="auth-login"),
     path(
         "token-refresh/",

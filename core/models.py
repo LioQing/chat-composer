@@ -10,6 +10,7 @@ class User(AbstractUser):
     """User model"""
 
     is_whitelisted = models.BooleanField(default=False)
+    name = models.CharField(max_length=255)
 
     class Meta(AbstractUser.Meta):
         swappable = "AUTH_USER_MODEL"

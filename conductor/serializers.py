@@ -167,15 +167,27 @@ class ConductorPipelineSaveSerializer(serializers.Serializer):
     )
 
 
-class ConductorAccountSerializer(serializers.Serializer):
+class ConductorAccountSerializer(serializers.ModelSerializer):
     """Serializer for the ConductorAccountView"""
 
-    id = serializers.IntegerField()
-    username = serializers.CharField()
-    name = serializers.CharField()
-    email = serializers.EmailField()
-    is_whitelisted = serializers.BooleanField()
-    date_joined = serializers.DateTimeField()
+    class Meta:
+        model = models.User
+        fields = (
+            "id",
+            "username",
+            "name",
+            "email",
+            "is_whitelisted",
+            "date_joined",
+        )
+        read_only_fields = (
+            "id",
+            "username",
+            "name",
+            "email",
+            "is_whitelisted",
+            "date_joined",
+        )
 
 
 class ConductorAccountPasswordChangeSerializer(serializers.Serializer):
@@ -204,3 +216,33 @@ class ConductorChatHistorySerializer(serializers.ModelSerializer):
             "clear_history",
             "created_at",
         )
+
+
+class ConductorAdminWhitelistSerializer(serializers.Serializer):
+    """Serializer for the ConductorAdminWhitelistView"""
+
+    username = serializers.CharField(required=True)
+    whitelist = serializers.BooleanField(default=True)
+
+
+class ConductorAdminCreateUserSerializer(serializers.ModelSerializer):
+    """Serializer for the ConductorAdminCreateUserView"""
+
+    class Meta:
+        model = models.User
+        fields = (
+            "id",
+            "username",
+            "name",
+            "email",
+            "password",
+        )
+        read_only_fields = ("id", "password")
+
+
+class ConductorAdminMakeTemplateSerializer(serializers.ModelSerializer):
+    """Serializer for the ConductorAdminMakeTemplateView"""
+
+    class Meta:
+        model = models.Component
+        fields = ("is_template",)
