@@ -208,7 +208,7 @@ Run and build the images.
 docker-compose up
 ```
 
-Despite `verbose-adventure-web-1` says server is at http://0.0.0.0:8000/, you should use http://localhost:8001/ defined in the `docker-compose.yml` file.
+Despite `chat-composer-web-1` says server is at http://0.0.0.0:8000/, you should use http://localhost:8001/ defined in the `docker-compose.yml` file.
 
 When you want to stop the containers.
 ```bash
