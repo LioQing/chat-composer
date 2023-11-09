@@ -9,6 +9,11 @@ urlpatterns = [
         name="auth-username-exists",
     ),
     path(
+        "is-whitelisted/",
+        views.IsWhitelistedView.as_view(),
+        name="auth-is-whitelisted",
+    ),
+    path(
         "user-whitelist/",
         views.UserWhitelistView.as_view(),
         name="auth-user-whitelist",

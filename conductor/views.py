@@ -297,7 +297,7 @@ class ConductorAccountView(
     """View to get the user's account information"""
 
     serializer_class = serializers.ConductorAccountSerializer
-    permission_classes = [permissions.IsWhitelisted]
+    permission_classes = [rest_permissions.IsAuthenticated]
 
     def get(self, request: views.Request, *args, **kwargs):
         """Return the user's account information"""
@@ -312,7 +312,7 @@ class ConductorAccountPasswordChangeView(
     """View to change the user's password"""
 
     serializer_class = serializers.ConductorAccountPasswordChangeSerializer
-    permission_classes = [permissions.IsWhitelisted]
+    permission_classes = [rest_permissions.IsAuthenticated]
 
     def patch(self, request: views.Request, *args, **kwargs):
         """Change the user's password"""

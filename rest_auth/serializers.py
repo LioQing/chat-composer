@@ -12,6 +12,12 @@ class UsernameExistsSerializer(serializers.Serializer):
     exists = serializers.BooleanField(read_only=True)
 
 
+class IsWhitelistedSerializer(serializers.Serializer):
+    """Serializer for the IsWhitelistedView"""
+
+    is_whitelisted = serializers.BooleanField()
+
+
 class UserWhitelistSerializer(serializers.Serializer):
     """Serializer for the UserWhitelistView"""
 

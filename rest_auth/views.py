@@ -26,6 +26,22 @@ class UsernameExistsView(generics.CreateAPIView, views.APIView):
         return views.Response(serializer.validated_data)
 
 
+class IsWhitelistedView(views.APIView):
+    """View for checking if user is whitelisted"""
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.IsWhitelistedSerializer
+
+    def get(self, request: views.Request):
+        """Return whether user is whitelisted"""
+        user: User = request.user
+        serializer = self.serializer_class(
+            data={"is_whitelisted": user.is_whitelisted}
+        )
+        serializer.is_valid(raise_exception=True)
+        return views.Response(serializer.data)
+
+
 class UserWhitelistView(generics.CreateAPIView, views.APIView):
     """View for whitelisting a user"""
 
