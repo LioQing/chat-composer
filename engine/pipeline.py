@@ -76,7 +76,7 @@ def run_component(
     glob["_iter_unpack_sequence_"] = guarded_iter_unpack_sequence
     glob["getattr"] = safer_getattr
 
-    glob["openai"] = oai
+    glob["oai"] = oai
 
     exec(byte_code, glob, loc)
 

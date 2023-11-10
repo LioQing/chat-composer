@@ -1,8 +1,17 @@
+"""Enumerations for OpenAI API."""
+
 from enum import StrEnum
 
 
 class Role(StrEnum):
-    """Role enumeration for conversation messages"""
+    """Role enumeration for conversation messages.
+
+    Attributes:
+        SYSTEM: system.
+        USER: user.
+        ASSISTANT: assistant.
+        FUNCTION: function.
+    """
 
     SYSTEM = "system"
     USER = "user"
@@ -15,7 +24,14 @@ class Role(StrEnum):
 
 
 class FinishReason(StrEnum):
-    """Finish reason enumeration for conversation messages"""
+    """Finish reason enumeration for conversation messages.
+
+    Attributes:
+        STOP: stop.
+        LENGTH: length.
+        CONTENT_FILTER: content_filter.
+        FUNCTION_CALL: function_call.
+    """
 
     STOP = "stop"
     LENGTH = "length"

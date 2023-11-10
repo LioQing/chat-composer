@@ -1,3 +1,5 @@
+"""Models for OpenAI API."""
+
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, model_serializer
@@ -6,14 +8,27 @@ from .enums import FinishReason, Role
 
 
 class FunctionCall(BaseModel):
-    """Function call"""
+    """Function call by chat completion.
+
+    Attributes:
+        arguments (str): The arguments to be passed to the function.
+        name (str): The name of the function.
+    """
 
     arguments: str
     name: str
 
 
 class Message(BaseModel):
-    """Message for conversation"""
+    """Message by chat completion.
+
+    Attributes:
+        content (str): The content of the message.
+        name (str, optional): The name of the message. Defaults to None.
+        function_call (FunctionCall, optional): The function call. Defaults to
+            None.
+        role (Role): The role of the message.
+    """
 
     content: str
     name: Optional[str] = Field(None)
@@ -35,7 +50,13 @@ class Message(BaseModel):
 
 
 class Choice(BaseModel):
-    """Message choice by OpenAI API"""
+    """Message choice by chat completion.
+
+    Attributes:
+        finish_reason (FinishReason): The finish reason.
+        index (int): The index of the message.
+        message (Message): The message.
+    """
 
     finish_reason: FinishReason
     index: int
@@ -43,7 +64,13 @@ class Choice(BaseModel):
 
 
 class Usage(BaseModel):
-    """Usage by OpenAI API"""
+    """Token usage by chat completion.
+
+    Attributes:
+        completion_tokens (int): The number of completion tokens.
+        prompt_tokens (int): The number of prompt tokens.
+        total_tokens (int): The number of total tokens.
+    """
 
     completion_tokens: int
     prompt_tokens: int
@@ -51,7 +78,15 @@ class Usage(BaseModel):
 
 
 class Chatcmpl(BaseModel):
-    """Chat completion by OpenAI API"""
+    """Chat completion response by OpenAI API.
+
+    Attributes:
+        choices (List[Choice]): The choices.
+        created (int): The created timestamp.
+        model (str): The model.
+        object (str): The object.
+        usage (Usage): The usage.
+    """
 
     id: str
     choices: List[Choice]
@@ -62,7 +97,12 @@ class Chatcmpl(BaseModel):
 
 
 class FunctionCallRequest(BaseModel):
-    """Function call for ChatCompletion.create"""
+    """Function call for chat completion to call.
+
+    Attributes:
+        auto (bool): Whether to automatically call the function.
+        name (str): The name of the function to call.
+    """
 
     auto: Optional[bool] = Field(False)
     name: Optional[str] = Field(None)
@@ -79,7 +119,15 @@ class FunctionCallRequest(BaseModel):
 
 
 class Parameter(BaseModel):
-    """Function parameter"""
+    """Function parameter.
+
+    Attributes:
+        type (str): The type of the parameter.
+        description (str): The description of the parameter.
+        enum (Optional[List[str]]): The enum of the parameter. Defaults to
+            None.
+        required (bool): Whether the parameter is required.
+    """
 
     type: str
     description: str
@@ -98,7 +146,11 @@ class Parameter(BaseModel):
 
 
 class Parameters(BaseModel):
-    """Parameters for function"""
+    """Parameters for function.
+
+    Attributes:
+        parameters (Dict[str, Parameter]): The parameters.
+    """
 
     parameters: Dict[str, Parameter]
 
@@ -119,7 +171,13 @@ class Parameters(BaseModel):
 
 
 class Function(BaseModel):
-    """Function"""
+    """Function.
+
+    Attributes:
+        description (str): The description of the function.
+        name (str): The name of the function.
+        parameters (Parameters): The parameters of the function.
+    """
 
     description: str
     name: str
@@ -127,7 +185,24 @@ class Function(BaseModel):
 
 
 class ChatcmplRequest(BaseModel):
-    """Chat completion request body"""
+    """Chat completion request body.
+
+    Attributes:
+        deployment_id (str): The deployment ID.
+        messages (List[Message]): The messages.
+        model (str): The model.
+        frequency_penalty (float): The frequency penalty.
+        function_call (FunctionCallRequest): The function call.
+        functions (Optional[List[Function]]): The functions. Defaults to None.
+        max_tokens (int): The maximum number of tokens.
+        n (int): The number of responses to return.
+        presence_penalty (float): The presence penalty.
+        stop (Optional[str | List[str]]): The stop. Defaults to None.
+        stream (bool): Whether to stream the response. Defaults to False.
+        temperature (float): The temperature.
+        top_p (float): The top p.
+        user (Optional[str]): The user. Defaults to None.
+    """
 
     deployment_id: str
     messages: List[Message]

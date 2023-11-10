@@ -1,5 +1,17 @@
+"""OpenAI API functions."""
+
+
 def chatcmpl(request):
-    """Call the OpenAI chat completion with the given request"""
+    """Call the OpenAI chat completion with the given request.
+
+    The request and response are logged to the database.
+
+    Args:
+        request (models.ChatcmplRequest): The request to be sent to the API.
+
+    Returns:
+        models.Chatcmpl: The response from the API.
+    """
     import openai
 
     from engine.restricted.oai import create_chatcmpl_models, logger
@@ -22,7 +34,15 @@ def chatcmpl(request):
 
 
 def chatcmpl_with_messages(messages: list):
-    """Call the OpenAI chat completion with the given messages"""
+    """Call the OpenAI chat completion with the given messages.
+
+    Args:
+        messages (List[models.Message]): A list of messages to be sent to the
+            API.
+
+    Returns:
+        models.Chatcmpl: The response from the API.
+    """
     from typing import List
 
     from config.openai import openai_config
@@ -48,7 +68,16 @@ def chatcmpl_with_messages(messages: list):
 
 
 def chatcmpl_function(function, messages: list = []):
-    """Call the OpenAI chat completion to provide arguments for the function"""
+    """Call the OpenAI chat completion to provide arguments for the function.
+
+    Args:
+        function (models.Function): The function to be called.
+        messages (List[models.Message], optional): A list of messages to be
+            sent to the API. Defaults to [].
+
+    Returns:
+        models.Chatcmpl: The response from the API.
+    """
     from typing import List
 
     from config.openai import openai_config
