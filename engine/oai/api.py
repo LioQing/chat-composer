@@ -1,7 +1,22 @@
 """OpenAI API functions."""
 
+from typing import List
 
-def chatcmpl(request):
+import openai
+
+from config.openai import openai_config
+from engine.restricted.oai import create_chatcmpl_models, logger
+
+from .models import (
+    Chatcmpl,
+    ChatcmplRequest,
+    Function,
+    FunctionCallRequest,
+    Message,
+)
+
+
+def chatcmpl(request: ChatcmplRequest) -> Chatcmpl:
     """Call the OpenAI chat completion with the given request.
 
     The request and response are logged to the database.
@@ -12,13 +27,6 @@ def chatcmpl(request):
     Returns:
         models.Chatcmpl: The response from the API.
     """
-    import openai
-
-    from engine.restricted.oai import create_chatcmpl_models, logger
-
-    from .models import Chatcmpl, ChatcmplRequest
-
-    request: ChatcmplRequest = request
     request = request.model_dump()
 
     logger.debug(f"Calling OpenAI chat completion with request: {request}")
@@ -33,7 +41,7 @@ def chatcmpl(request):
     return response
 
 
-def chatcmpl_with_messages(messages: list):
+def chatcmpl_with_messages(messages: List[Message]) -> Chatcmpl:
     """Call the OpenAI chat completion with the given messages.
 
     Args:
@@ -43,15 +51,6 @@ def chatcmpl_with_messages(messages: list):
     Returns:
         models.Chatcmpl: The response from the API.
     """
-    from typing import List
-
-    from config.openai import openai_config
-    from engine.restricted.oai import logger
-
-    from .models import ChatcmplRequest, Message
-
-    messages: List[Message] = messages
-
     request = ChatcmplRequest(
         deployment_id=openai_config.deployment,
         model=openai_config.model,
@@ -67,7 +66,9 @@ def chatcmpl_with_messages(messages: list):
     return response
 
 
-def chatcmpl_function(function, messages: list = []):
+def chatcmpl_function(
+    function: Function, messages: List[Message] = []
+) -> Chatcmpl:
     """Call the OpenAI chat completion to provide arguments for the function.
 
     Args:
@@ -78,16 +79,6 @@ def chatcmpl_function(function, messages: list = []):
     Returns:
         models.Chatcmpl: The response from the API.
     """
-    from typing import List
-
-    from config.openai import openai_config
-    from engine.restricted.oai import logger
-
-    from .models import ChatcmplRequest, Function, FunctionCallRequest, Message
-
-    function: Function = function
-    messages: List[Message] = messages
-
     request = ChatcmplRequest(
         deployment_id=openai_config.deployment,
         model=openai_config.model,

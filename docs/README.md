@@ -2,7 +2,7 @@
 
 # API Overview
 
-- [oai](./oai/README.md): OpenAI module.
+- [`oai`](./oai/README.md): OpenAI module.
 
 
 ---

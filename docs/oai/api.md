@@ -8,12 +8,12 @@ OpenAI API functions.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L4"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L19"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `chatcmpl`
 
 ```python
-chatcmpl(request)
+chatcmpl(request: oai.models.ChatcmplRequest) → Chatcmpl
 ```
 
 Call the OpenAI chat completion with the given request.
@@ -35,12 +35,12 @@ The request and response are logged to the database.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L36"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L44"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `chatcmpl_with_messages`
 
 ```python
-chatcmpl_with_messages(messages: list)
+chatcmpl_with_messages(messages: List[oai.models.Message]) → Chatcmpl
 ```
 
 Call the OpenAI chat completion with the given messages.
@@ -60,12 +60,15 @@ Call the OpenAI chat completion with the given messages.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L70"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L69"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `chatcmpl_function`
 
 ```python
-chatcmpl_function(function, messages: list = [])
+chatcmpl_function(
+    function: oai.models.Function,
+    messages: List[oai.models.Message] = []
+) → Chatcmpl
 ```
 
 Call the OpenAI chat completion to provide arguments for the function.
