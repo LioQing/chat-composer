@@ -37,9 +37,9 @@ class Component(models.Model):
         }
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField()
+    name = models.CharField(max_length=255)
     function_name = models.CharField(
-        validators=[validators.validate_function_name]
+        max_length=255, validators=[validators.validate_function_name]
     )
     description = models.JSONField(default=component_description_default)
     code = models.TextField()
@@ -64,7 +64,7 @@ class Pipeline(models.Model):
     """Pipeline model"""
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField()
+    name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -95,7 +95,7 @@ class Chat(models.Model):
     """Chat model"""
 
     pipeline = models.ForeignKey(Pipeline, on_delete=models.CASCADE)
-    user_message = models.CharField()
-    api_message = models.CharField()
+    user_message = models.TextField()
+    api_message = models.TextField()
     clear_history = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)

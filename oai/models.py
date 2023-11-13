@@ -6,19 +6,19 @@ from . import enums
 class FunctionCall(models.Model):
     """Function call"""
 
-    arguments = models.CharField()
-    name = models.CharField()
+    arguments = models.TextField()
+    name = models.TextField()
 
 
 class Message(models.Model):
     """Message for conversation"""
 
-    content = models.CharField()
-    name = models.CharField(null=True, blank=True)
+    content = models.TextField()
+    name = models.TextField(null=True, blank=True)
     function_call = models.OneToOneField(
         FunctionCall, on_delete=models.CASCADE, null=True, blank=True
     )
-    role = models.CharField()
+    role = models.CharField(choices=enums.Role.choices())
 
 
 class Choice(models.Model):

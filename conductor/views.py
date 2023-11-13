@@ -411,7 +411,7 @@ class ConductorChatHistoryView(
         pipeline = models.Pipeline.objects.filter(user=self.request.user).get(
             id=self.kwargs["pk"]
         )
-        return self.queryset.filter(pipeline=pipeline).order_by("created_at")
+        return self.queryset.filter(pipeline=pipeline).order_by("-created_at")
 
     def list(self, request: views.Request, *args, **kwargs):
         """Return the chat history of the pipeline"""

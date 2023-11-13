@@ -13,7 +13,11 @@ from RestrictedPython.Eval import (
     default_guarded_getitem,
     default_guarded_getiter,
 )
-from RestrictedPython.Guards import guarded_iter_unpack_sequence, safer_getattr
+from RestrictedPython.Guards import (
+    full_write_guard,
+    guarded_iter_unpack_sequence,
+    guarded_unpack_sequence,
+)
 
 import engine.restricted.oai
 from config.logger import logger_config
@@ -59,8 +63,7 @@ def run_component(
         component.code, f"{component.function_name}.py", "exec"
     )
 
-    state = copy.deepcopy(component.state)
-    loc = {"state": state}
+    loc = {}
 
     builtins = {}
     builtins.update(safe_builtins)
@@ -74,8 +77,10 @@ def run_component(
     glob["_getiter_"] = default_guarded_getiter
     glob["_getitem_"] = default_guarded_getitem
     glob["_iter_unpack_sequence_"] = guarded_iter_unpack_sequence
-    glob["getattr"] = safer_getattr
+    glob["_unpack_sequence_"] = guarded_unpack_sequence
+    glob["_write_"] = full_write_guard
 
+    glob["state"] = copy.deepcopy(component.state)
     glob["oai"] = oai
 
     exec(byte_code, glob, loc)
@@ -85,9 +90,10 @@ def run_component(
 
     function = loc[component.function_name]
     new_data = function(user_message, data)
-    component.state = loc["state"]
+    component.state = glob["state"]
 
     logger.debug(f"data: {new_data}, state: {component.state}")
+    component.save()
     logger.info(f"Finished running component {component.name}")
 
     # Validation
