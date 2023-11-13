@@ -18,7 +18,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Generate docs for engine APIs."""
         doc_modules = [oai]
-        md_str = "\n# API Overview\n\n"
         for doc_module in doc_modules:
             doc_name = doc_module.__name__.split(".")[-1]
             generator = MarkdownGenerator(
@@ -46,14 +45,3 @@ class Command(BaseCommand):
                 filename="README.md",
                 out_path=f"{OUT_PATH}/{doc_name}",
             )
-
-            md_str += (
-                f"- [`{doc_name}`](./{doc_name}/README.md):"
-                f" {doc_module.__doc__}\n"
-            )
-
-        to_md_file(
-            markdown_str=md_str,
-            filename="README.md",
-            out_path=f"{OUT_PATH}",
-        )
