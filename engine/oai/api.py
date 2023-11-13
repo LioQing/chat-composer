@@ -2,11 +2,6 @@
 
 from typing import List
 
-import openai
-
-from config.openai import openai_config
-from engine.restricted.oai import create_chatcmpl_models, logger
-
 from .models import (
     Chatcmpl,
     ChatcmplRequest,
@@ -27,6 +22,10 @@ def chatcmpl(request: ChatcmplRequest) -> Chatcmpl:
     Returns:
         models.Chatcmpl: The response from the API.
     """
+    import openai
+
+    from engine.restricted.oai import create_chatcmpl_models, logger
+
     request = request.model_dump()
 
     logger.debug(f"Calling OpenAI chat completion with request: {request}")
@@ -51,6 +50,8 @@ def chatcmpl_with_messages(messages: List[Message]) -> Chatcmpl:
     Returns:
         models.Chatcmpl: The response from the API.
     """
+    from config.openai import openai_config
+
     request = ChatcmplRequest(
         deployment_id=openai_config.deployment,
         model=openai_config.model,
@@ -60,6 +61,8 @@ def chatcmpl_with_messages(messages: List[Message]) -> Chatcmpl:
     response = chatcmpl(request)
 
     if response.choices[0].message.content is None:
+        from engine.restricted.oai import logger
+
         logger.error("API response message is None")
         raise ValueError("API response message is None")
 
@@ -79,6 +82,8 @@ def chatcmpl_function(
     Returns:
         models.Chatcmpl: The response from the API.
     """
+    from config.openai import openai_config
+
     request = ChatcmplRequest(
         deployment_id=openai_config.deployment,
         model=openai_config.model,
@@ -90,6 +95,8 @@ def chatcmpl_function(
     response = chatcmpl(request)
 
     if response.choices[0].message.function_call is None:
+        from engine.restricted.oai import logger
+
         logger.error("API Function is not called.")
         raise ValueError("API Function is not called.")
 
