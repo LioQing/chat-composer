@@ -1,6 +1,6 @@
-# Python Template
+# Chat Composer
 
-This is a template for Python projects.
+Chat composer project.
 
 ## Graphs
 
