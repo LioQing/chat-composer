@@ -8,7 +8,7 @@ OpenAI API functions.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L19"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L14"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `chatcmpl`
 
@@ -35,7 +35,7 @@ The request and response are logged to the database.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L44"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L43"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `chatcmpl_with_messages`
 
@@ -60,7 +60,7 @@ Call the OpenAI chat completion with the given messages.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L69"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L72"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `chatcmpl_function`
 

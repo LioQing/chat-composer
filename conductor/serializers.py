@@ -15,6 +15,14 @@ class ConductorPipelineSerializer(serializers.ModelSerializer):
         )
 
 
+class ConductorPipelineStateSerializer(serializers.ModelSerializer):
+    """Serializer for the PipelineStateView"""
+
+    class Meta:
+        model = models.Pipeline
+        fields = ("state",)
+
+
 class ConductorPipelineNewSerializer(serializers.ModelSerializer):
     """Serializer for the PipelineNewView"""
 
@@ -162,6 +170,7 @@ class ConductorPipelineSaveSerializer(serializers.Serializer):
     """Serializer for the ConductorPipelineSaveView"""
 
     name = serializers.CharField(required=True)
+    state = serializers.JSONField(required=True)
     components = ConductorPipelineSaveComponentInstanceSerializer(
         many=True, required=True
     )

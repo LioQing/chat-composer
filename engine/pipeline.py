@@ -38,7 +38,9 @@ def run(pipeline: models.Pipeline, user_message: str) -> Dict[str, Any]:
         is_enabled=True
     ):
         component_instance: models.ComponentInstance = component_instance
-        data = run_component(component_instance.component, user_message, data)
+        data = run_component(
+            component_instance.component, pipeline, user_message, data
+        )
 
     logger.info(f"Finished running pipeline {pipeline.name}")
     return data
@@ -46,6 +48,7 @@ def run(pipeline: models.Pipeline, user_message: str) -> Dict[str, Any]:
 
 def run_component(
     component: models.Component,
+    pipeline: models.Pipeline,
     user_message: str,
     data: Dict[str, Any],
 ) -> Dict[str, Any]:
@@ -80,31 +83,48 @@ def run_component(
     glob["_unpack_sequence_"] = guarded_unpack_sequence
     glob["_write_"] = full_write_guard
 
+    glob["pstate"] = copy.deepcopy(pipeline.state)
     glob["state"] = copy.deepcopy(component.state)
     glob["oai"] = oai
 
     exec(byte_code, glob, loc)
 
     # Run the code
-    logger.debug(f"data: {data}, state: {component.state}")
+    logger.debug(
+        f"\ndata:\n{data}\n\nstate:\n{component.state}\n\n"
+        f"pstate:{pipeline.state}"
+    )
 
     function = loc[component.function_name]
     new_data = function(user_message, data)
     component.state = glob["state"]
+    pipeline.state = glob["pstate"]
 
-    logger.debug(f"data: {new_data}, state: {component.state}")
+    logger.debug(
+        f"\ndata:\n{new_data}\n\nstate:\n{component.state}\n\n"
+        f"pstate:{pipeline.state}"
+    )
+
+    # Validation
+    if not isinstance(component.state, dict):
+        raise exceptions.InvalidComponentCode(
+            f"Component {component.name} did not set a dict for state"
+        )
+
+    if not isinstance(pipeline.state, dict):
+        raise exceptions.InvalidComponentCode(
+            f"Component {component.name} did not set a dict for pstate"
+        )
+
+    # Save
     component.save()
+    pipeline.save()
     logger.info(f"Finished running component {component.name}")
 
     # Validation
     if not isinstance(new_data, dict):
         raise exceptions.InvalidComponentCode(
             f"Component {component.name} did not return a dict"
-        )
-
-    if not isinstance(component.state, dict):
-        raise exceptions.InvalidComponentCode(
-            f"Component {component.name} did not set a dict for state"
         )
 
     # Clean up

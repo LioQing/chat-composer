@@ -6,6 +6,7 @@ Chat composer project.
 
 ### ER Diagram
 ```mermaid
+
 erDiagram
     User {
         Boolean is_whitelisted
@@ -26,6 +27,7 @@ erDiagram
         ManyToOne(User) user FK
         ManyToMany(Component) components FK "through ComponentInstance"
         Text name
+        JSON state
         Boolean is_active
         DateTime created_at
     }
@@ -97,7 +99,6 @@ erDiagram
     Choice ||--|| Message : contains
     Message ||--o| FunctionCall : calls
     Chatcmpl ||--|| Usage : uses
-
 ```
 
 ## Environment Setup

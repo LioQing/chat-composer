@@ -8,6 +8,7 @@ from engine import oai
 
 SRC_BASE_URL = "https://github.com/LioQing/chat-composer/blob/main/engine/"
 OUT_PATH = "./docs"
+MODULES = [oai]
 
 
 class Command(BaseCommand):
@@ -17,8 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """Generate docs for engine APIs."""
-        doc_modules = [oai]
-        for doc_module in doc_modules:
+        for doc_module in MODULES:
             doc_name = doc_module.__name__.split(".")[-1]
             generator = MarkdownGenerator(
                 src_root_path="./engine",

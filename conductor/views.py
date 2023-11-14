@@ -33,6 +33,21 @@ class ConductorPipelineView(
         return self.queryset.filter(user=self.request.user)
 
 
+class ConductorPipelineStateView(
+    generics.RetrieveAPIView,
+    viewsets.GenericViewSet,
+):
+    """Viewset for retrieving a pipeline's state"""
+
+    queryset = models.Pipeline.objects.all()
+    serializer_class = serializers.ConductorPipelineStateSerializer
+    permission_classes = [permissions.IsWhitelisted]
+
+    def get_queryset(self):
+        """Return the pipelines owned by the user"""
+        return self.queryset.filter(user=self.request.user)
+
+
 class ConductorPipelineNewView(
     generics.CreateAPIView,
     viewsets.GenericViewSet,
@@ -268,6 +283,7 @@ class ConductorPipelineSaveView(views.APIView):
 
         # Save the pipeline name
         pipeline.name = serializer.validated_data["name"]
+        pipeline.state = serializer.validated_data["state"]
         pipeline.save()
 
         # For each component, save them
