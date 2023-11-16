@@ -37,6 +37,10 @@ router.register(
     r"admin/make-template",
     views.ConductorAdminMakeTemplateView,
 )
+router.register(
+    r"admin/make-safe",
+    views.ConductorAdminMakeSafeView,
+)
 
 urlpatterns = [
     *router.urls,

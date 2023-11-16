@@ -19,7 +19,7 @@ class PingPongView(views.APIView):
     """View for checking if the server is running"""
 
     serializer_class = serializers.PingPongSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         """Return a pong response"""

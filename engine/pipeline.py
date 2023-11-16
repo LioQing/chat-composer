@@ -3,21 +3,6 @@ import logging
 from typing import Any, Dict
 
 from django.db.models import QuerySet
-from RestrictedPython import (
-    compile_restricted,
-    limited_builtins,
-    safe_builtins,
-    utility_builtins,
-)
-from RestrictedPython.Eval import (
-    default_guarded_getitem,
-    default_guarded_getiter,
-)
-from RestrictedPython.Guards import (
-    full_write_guard,
-    guarded_iter_unpack_sequence,
-    guarded_unpack_sequence,
-)
 
 import engine.restricted.oai
 from config.logger import logger_config
@@ -30,6 +15,10 @@ def run(pipeline: models.Pipeline, user_message: str) -> Dict[str, Any]:
     """Run the pipeline"""
     logger = logging.getLogger(__name__)
     logger.setLevel(logger_config.level)
+
+    if not pipeline.is_safe:
+        raise exceptions.UnsafePipeline()
+
     logger.info(f"Running pipeline {pipeline.name}")
 
     data = {}
@@ -62,27 +51,14 @@ def run_component(
     engine.restricted.oai.current_component = component
 
     # Compile the code
-    byte_code = compile_restricted(
+    byte_code = compile(
         component.code, f"{component.function_name}.py", "exec"
     )
 
     loc = {}
 
-    builtins = {}
-    builtins.update(safe_builtins)
-    builtins.update(limited_builtins)
-    builtins.update(utility_builtins)
-
     glob = {}
-    glob["__builtins__"] = builtins
-    glob["__metaclass__"] = type
-    glob["__name__"] = "restricted namespace"
-    glob["_getiter_"] = default_guarded_getiter
-    glob["_getitem_"] = default_guarded_getitem
-    glob["_iter_unpack_sequence_"] = guarded_iter_unpack_sequence
-    glob["_unpack_sequence_"] = guarded_unpack_sequence
-    glob["_write_"] = full_write_guard
-
+    glob["__name__"] = f"pipeline {pipeline.id} component {component.id}"
     glob["pstate"] = copy.deepcopy(pipeline.state)
     glob["state"] = copy.deepcopy(component.state)
     glob["oai"] = oai

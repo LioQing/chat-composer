@@ -17,3 +17,11 @@ class InvalidComponentCode(APIException):
             code = self.default_code
 
         self.detail = detail
+
+
+class UnsafePipeline(APIException):
+    """Exception for when the adventure has already started."""
+
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = _("Pipeline is unsafe.")
+    default_code = "unsafe_pipeline"

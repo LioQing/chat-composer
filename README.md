@@ -6,7 +6,6 @@ Chat composer project.
 
 ### ER Diagram
 ```mermaid
-
 erDiagram
     User {
         Boolean is_whitelisted
@@ -29,6 +28,7 @@ erDiagram
         Text name
         JSON state
         Boolean is_active
+        Boolean is_safe
         DateTime created_at
     }
 

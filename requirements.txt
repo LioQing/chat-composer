@@ -22,6 +22,7 @@ identify==2.5.29
 idna==3.4
 inflection==0.5.1
 isort==5.10.1
+json-fix==0.5.2
 jsonschema==4.19.1
 jsonschema-specifications==2023.7.1
 lazydocs==0.4.8

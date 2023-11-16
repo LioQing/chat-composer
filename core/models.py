@@ -66,6 +66,7 @@ class Pipeline(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     state = models.JSONField(default=dict)
+    is_safe = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -98,5 +99,4 @@ class Chat(models.Model):
     pipeline = models.ForeignKey(Pipeline, on_delete=models.CASCADE)
     user_message = models.TextField()
     api_message = models.TextField()
-    clear_history = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)

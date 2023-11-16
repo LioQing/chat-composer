@@ -11,6 +11,7 @@ class ConductorPipelineSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
+            "is_safe",
             "created_at",
         )
 
@@ -31,9 +32,10 @@ class ConductorPipelineNewSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
+            "is_safe",
             "created_at",
         )
-        read_only_fields = ("id", "name", "created_at")
+        read_only_fields = ("id", "name", "is_safe", "created_at")
 
 
 class ConductorPipelineDeleteSerializer(serializers.ModelSerializer):
@@ -222,7 +224,6 @@ class ConductorChatHistorySerializer(serializers.ModelSerializer):
             "id",
             "user_message",
             "api_message",
-            "clear_history",
             "created_at",
         )
 
@@ -255,3 +256,11 @@ class ConductorAdminMakeTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Component
         fields = ("is_template",)
+
+
+class ConductorAdminMakeSafeSerializer(serializers.ModelSerializer):
+    """Serializer for the ConductorAdminMakeSafeView"""
+
+    class Meta:
+        model = models.Pipeline
+        fields = ("is_safe",)

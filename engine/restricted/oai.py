@@ -22,6 +22,9 @@ logger.setLevel(logger_config.level)
 current_component: Optional[core_models.Component] = None
 
 
+openai_chatcmpl = openai.ChatCompletion.create
+
+
 def create_chatcmpl_models(request: Dict[str, Any], response: Chatcmpl):
     """Create a Chatcmpl models from the request and response"""
     if current_component is None:
