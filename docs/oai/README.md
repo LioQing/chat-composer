@@ -26,8 +26,6 @@
 ## Functions
 
 - [`api.chatcmpl`](./api.md#function-chatcmpl): Call the OpenAI chat completion with the given request.
-- [`api.chatcmpl_function`](./api.md#function-chatcmpl_function): Call the OpenAI chat completion to provide arguments for the function.
-- [`api.chatcmpl_with_messages`](./api.md#function-chatcmpl_with_messages): Call the OpenAI chat completion with the given messages.
 
 
 ---

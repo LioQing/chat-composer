@@ -26,6 +26,10 @@ router.register(
     views.ConductorChatHistoryView,
 )
 router.register(
+    r"chat/pipeline",
+    views.ConductorChatPipelineView,
+)
+router.register(
     r"component/details",
     views.ConductorComponentDetailsView,
 )
@@ -58,6 +62,21 @@ urlpatterns = [
         "chat/send/<int:pk>/",
         views.ConductorChatSendView.as_view(),
         name="conductor-chat-send",
+    ),
+    path(
+        "chat/save/chat/<int:pk>/",
+        views.ConductorChatSaveChatView.as_view(),
+        name="conductor-chat-save-chat",
+    ),
+    path(
+        "chat/save/states/<int:pk>/",
+        views.ConductorChatSaveStatesView.as_view(),
+        name="conductor-chat-save-states",
+    ),
+    path(
+        "chat/oai/chatcmpl/<int:pk>/",
+        views.ConductorChatOaiChatcmplView.as_view(),
+        name="conductor-chat-oai-chatcmpl",
     ),
     path(
         "account/",

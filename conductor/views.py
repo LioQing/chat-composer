@@ -6,11 +6,14 @@ from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
 )
+from pydantic import ValidationError
 from rest_framework import generics
 from rest_framework import permissions as rest_permissions
 from rest_framework import views, viewsets
 
+import engine.oai.api
 import engine.pipeline
+import engine.restricted.oai
 from config.logger import logger_config
 from core import models
 from rest_auth import permissions
@@ -459,6 +462,106 @@ class ConductorChatHistoryView(
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)
         return self.get_paginated_response(serializer.data)
+
+
+class ConductorChatPipelineView(
+    generics.RetrieveAPIView,
+    viewsets.GenericViewSet,
+):
+    """View to get the pipeline for running in-browser chat"""
+
+    queryset = models.Pipeline.objects.all()
+    serializer_class = serializers.ConductorChatPipelineSerializer
+    permission_classes = [permissions.IsWhitelisted]
+
+    def get_queryset(self):
+        """Return the pipelines owned by the user"""
+        if self.request.user.is_staff:
+            return self.queryset.all()
+        return self.queryset.filter(user=self.request.user)
+
+
+class ConductorChatSaveChatView(views.APIView):
+    """View to save chat"""
+
+    serializer_class = serializers.ConductorChatSaveChatSerializer
+    permission_classes = [permissions.IsWhitelisted]
+
+    def patch(self, request: views.Request, pk: int, *args, **kwargs):
+        """Save the chat"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        pipeline = models.Pipeline.objects.filter(user=request.user).get(id=pk)
+
+        # Save the chat
+        models.Chat.objects.create(
+            pipeline=pipeline,
+            user_message=serializer.validated_data["user_message"],
+            api_message=serializer.validated_data["api_message"],
+        )
+
+        return views.Response(serializer.data)
+
+
+class ConductorChatSaveStatesView(views.APIView):
+    """View to save states"""
+
+    serializer_class = serializers.ConductorChatSaveStatesSerializer
+    permission_classes = [permissions.IsWhitelisted]
+
+    def patch(self, request: views.Request, pk: int, *args, **kwargs):
+        """Save the states"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        component = models.Component.objects.filter(user=request.user).get(
+            id=pk
+        )
+
+        # Save the state
+        component.state = serializer.validated_data["state"]
+        component.save()
+
+        # Save the pipeline state
+        pipeline = component.get_pipeline()
+        pipeline.state = serializer.validated_data["pstate"]
+
+        return views.Response(serializer.data)
+
+
+class ConductorChatOaiChatcmplView(views.APIView):
+    """View to call the OpenAI chat completion"""
+
+    serializer_class = serializers.ConductorChatOaiChatcmplSerializer
+    permission_classes = [permissions.IsWhitelisted]
+
+    def post(self, request: views.Request, pk: int, *args, **kwargs):
+        """Call the OpenAI chat completion"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        component = models.Component.objects.filter(user=request.user).get(
+            id=pk
+        )
+
+        response = None
+        with engine.restricted.oai.init_oai(component):
+            try:
+                request_args = serializer.validated_data["request"]
+                chatcmpl_request = engine.oai.api.ChatcmplRequest(
+                    **request_args
+                )
+            except ValidationError as e:
+                raise exceptions.BadArgumentsException(str(e))
+
+            response = engine.oai.api.chatcmpl(chatcmpl_request)
+
+        if response is None:
+            raise ValueError("response is None")
+
+        serializer.validated_data["response"] = response.model_dump()
+        return views.Response(serializer.data)
 
 
 class ConductorAdminWhitelistView(views.APIView):

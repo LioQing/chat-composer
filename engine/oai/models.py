@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, model_serializer
 
+from config.openai import openai_config
+
 from .enums import FinishReason, Role
 
 
@@ -188,25 +190,26 @@ class ChatcmplRequest(BaseModel):
     """Chat completion request body.
 
     Attributes:
-        deployment_id (str): The deployment ID.
+        deployment_id (str): The deployment ID. Defaults to config.
+        model (str): The model. Defaults to config.
         messages (List[Message]): The messages.
-        model (str): The model.
-        frequency_penalty (float): The frequency penalty.
-        function_call (FunctionCallRequest): The function call.
+        frequency_penalty (float): The frequency penalty. Defaults to 0.0.
+        function_call (FunctionCallRequest): The function call. Defaults to
+            None.
         functions (Optional[List[Function]]): The functions. Defaults to None.
-        max_tokens (int): The maximum number of tokens.
-        n (int): The number of responses to return.
-        presence_penalty (float): The presence penalty.
+        max_tokens (int): The maximum number of tokens. Defaults to 2048.
+        n (int): The number of responses to return. Defaults to 1.
+        presence_penalty (float): The presence penalty. Defaults to 0.0.
         stop (Optional[str | List[str]]): The stop. Defaults to None.
         stream (bool): Whether to stream the response. Defaults to False.
-        temperature (float): The temperature.
-        top_p (float): The top p.
+        temperature (float): The temperature. Defaults to 1.0.
+        top_p (float): The top p. Defaults to 1.0.
         user (Optional[str]): The user. Defaults to None.
     """
 
-    deployment_id: str
+    deployment_id: str = Field(openai_config.deployment)
+    model: str = Field(openai_config.model)
     messages: List[Message]
-    model: str
     frequency_penalty: float = Field(0.0, ge=-2.0, le=2.0)
     function_call: FunctionCallRequest = Field(
         default_factory=FunctionCallRequest

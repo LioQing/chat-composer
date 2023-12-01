@@ -228,6 +228,57 @@ class ConductorChatHistorySerializer(serializers.ModelSerializer):
         )
 
 
+class ConductorChatComponentSerializer(serializers.ModelSerializer):
+    """Serializer for the ConductorChatPipelineView"""
+
+    class Meta:
+        model = models.Component
+        fields = (
+            "id",
+            "name",
+            "code",
+            "function_name",
+            "state",
+        )
+
+
+class ConductorChatPipelineSerializer(serializers.ModelSerializer):
+    """Serializer for the ConductorChatPipelineView"""
+
+    components = ConductorChatComponentSerializer(
+        many=True, source="get_components"
+    )
+
+    class Meta:
+        model = models.Pipeline
+        fields = (
+            "id",
+            "state",
+            "components",
+        )
+
+
+class ConductorChatSaveChatSerializer(serializers.Serializer):
+    """Serializer for the ConductorChatSaveChatView"""
+
+    user_message = serializers.CharField(required=True)
+    api_message = serializers.CharField(required=True)
+
+
+class ConductorChatSaveStatesSerializer(serializers.Serializer):
+    """Serializer for the ConductorChatSaveStatesView"""
+
+    state = serializers.JSONField(required=True)
+    pstate = serializers.JSONField(required=True)
+
+
+class ConductorChatOaiChatcmplSerializer(serializers.Serializer):
+    """Serializer for the ConductorChatOaiChatcmplView"""
+
+    request = serializers.JSONField(required=True)
+    response = serializers.JSONField(read_only=True)
+
+
 class ConductorAdminWhitelistSerializer(serializers.Serializer):
     """Serializer for the ConductorAdminWhitelistView"""
 

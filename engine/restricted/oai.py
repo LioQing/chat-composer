@@ -19,7 +19,32 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logger_config.level)
 
 
-current_component: Optional[core_models.Component] = None
+_current_component: Optional[core_models.Component] = None
+
+
+class _CurrentComponentHelper:
+    """Helper class for setting current component"""
+
+    def __init__(self, component: core_models.Component):
+        """Initialize the helper"""
+        self.component = component
+
+    def __enter__(self):
+        """Enter the context"""
+        global _current_component
+        _current_component = self.component
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit the context"""
+        global _current_component
+        _current_component = None
+
+
+def init_oai(
+    component: core_models.Component,
+) -> _CurrentComponentHelper:
+    """Set the current component"""
+    return _CurrentComponentHelper(component)
 
 
 openai_chatcmpl = openai.ChatCompletion.create
@@ -27,7 +52,7 @@ openai_chatcmpl = openai.ChatCompletion.create
 
 def create_chatcmpl_models(request: Dict[str, Any], response: Chatcmpl):
     """Create a Chatcmpl models from the request and response"""
-    if current_component is None:
+    if _current_component is None:
         raise ValueError("current_component is None")
 
     chatcmpl_request = models.ChatcmplRequest.objects.create(
@@ -43,7 +68,7 @@ def create_chatcmpl_models(request: Dict[str, Any], response: Chatcmpl):
             ),
         ),
         request=request,
-        component=current_component,
+        component=_current_component,
     )
 
     chatcmpl = chatcmpl_request.response

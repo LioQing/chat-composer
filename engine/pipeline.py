@@ -47,63 +47,58 @@ def run_component(
     logger.info(f"Running component {component.name}")
     logger.debug(component.code)
 
-    # Setup
-    engine.restricted.oai.current_component = component
-
-    # Compile the code
-    byte_code = compile(
-        component.code, f"{component.function_name}.py", "exec"
-    )
-
-    loc = {}
-
-    glob = {}
-    glob["__name__"] = f"pipeline {pipeline.id} component {component.id}"
-    glob["pstate"] = copy.deepcopy(pipeline.state)
-    glob["state"] = copy.deepcopy(component.state)
-    glob["oai"] = oai
-
-    exec(byte_code, glob, loc)
-
-    # Run the code
-    logger.debug(
-        f"\ndata:\n{data}\n\nstate:\n{component.state}\n\n"
-        f"pstate:{pipeline.state}"
-    )
-
-    function = loc[component.function_name]
-    new_data = function(user_message, data)
-    component.state = glob["state"]
-    pipeline.state = glob["pstate"]
-
-    logger.debug(
-        f"\ndata:\n{new_data}\n\nstate:\n{component.state}\n\n"
-        f"pstate:{pipeline.state}"
-    )
-
-    # Validation
-    if not isinstance(component.state, dict):
-        raise exceptions.InvalidComponentCode(
-            f"Component {component.name} did not set a dict for state"
+    with engine.restricted.oai.init_oai(component):
+        # Compile the code
+        byte_code = compile(
+            component.code, f"{component.function_name}.py", "exec"
         )
 
-    if not isinstance(pipeline.state, dict):
-        raise exceptions.InvalidComponentCode(
-            f"Component {component.name} did not set a dict for pstate"
+        loc = {}
+
+        glob = {}
+        glob["__name__"] = f"pipeline {pipeline.id} component {component.id}"
+        glob["pstate"] = copy.deepcopy(pipeline.state)
+        glob["state"] = copy.deepcopy(component.state)
+        glob["oai"] = oai
+
+        exec(byte_code, glob, loc)
+
+        # Run the code
+        logger.debug(
+            f"\ndata:\n{data}\n\nstate:\n{component.state}\n\n"
+            f"pstate:{pipeline.state}"
         )
 
-    # Save
-    component.save()
-    pipeline.save()
-    logger.info(f"Finished running component {component.name}")
+        function = loc[component.function_name]
+        new_data = function(user_message, data)
+        component.state = glob["state"]
+        pipeline.state = glob["pstate"]
 
-    # Validation
-    if not isinstance(new_data, dict):
-        raise exceptions.InvalidComponentCode(
-            f"Component {component.name} did not return a dict"
+        logger.debug(
+            f"\ndata:\n{new_data}\n\nstate:\n{component.state}\n\n"
+            f"pstate:{pipeline.state}"
         )
 
-    # Clean up
-    engine.restricted.oai.current_component = None
+        # Validation
+        if not isinstance(component.state, dict):
+            raise exceptions.InvalidComponentCode(
+                f"Component {component.name} did not set a dict for state"
+            )
+
+        if not isinstance(pipeline.state, dict):
+            raise exceptions.InvalidComponentCode(
+                f"Component {component.name} did not set a dict for pstate"
+            )
+
+        # Save
+        component.save()
+        pipeline.save()
+        logger.info(f"Finished running component {component.name}")
+
+        # Validation
+        if not isinstance(new_data, dict):
+            raise exceptions.InvalidComponentCode(
+                f"Component {component.name} did not return a dict"
+            )
 
     return new_data

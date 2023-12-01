@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import QuerySet
 
 from . import managers, validators
 
@@ -59,6 +60,11 @@ class Component(models.Model):
             self.code = self.generate_code()
         super().save(*args, **kwargs)
 
+    def get_pipeline(self) -> Pipeline:
+        """Get the pipelines for this component"""
+        instance: ComponentInstance = self.componentinstance
+        return instance.pipeline
+
 
 class Pipeline(models.Model):
     """Pipeline model"""
@@ -79,12 +85,21 @@ class Pipeline(models.Model):
             self.name = f"Pipeline {self.user.pipeline_set.count() + 1}"
         super().save(*args, **kwargs)
 
+    def get_components(self) -> QuerySet[Component]:
+        """Get the components for this pipeline"""
+        instances: QuerySet[ComponentInstance] = self.componentinstance_set
+        return Component.objects.filter(
+            id__in=instances.filter(is_enabled=True).values_list(
+                "component_id", flat=True
+            )
+        ).order_by("componentinstance__order")
+
 
 class ComponentInstance(models.Model):
     """ComponentInstance model"""
 
     pipeline = models.ForeignKey(Pipeline, on_delete=models.CASCADE)
-    component = models.ForeignKey(Component, on_delete=models.CASCADE)
+    component = models.OneToOneField(Component, on_delete=models.CASCADE)
     is_enabled = models.BooleanField(default=True)
     order = models.PositiveIntegerField()
     is_active = models.BooleanField(default=True)
