@@ -12,6 +12,7 @@ class DjangoConfig(BaseConfig):
     debug: bool = Field(False)
     allowed_hosts: List[str] = Field(["127.0.0.1", "localhost"])
     cors_allowed_origins: List[str] = Field([])
+    time_zone: str = Field("UTC")
 
     class Config:
         env_prefix = "DJANGO_"

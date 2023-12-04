@@ -14,11 +14,7 @@ def chatcmpl(request: ChatcmplRequest) -> Chatcmpl:
     Returns:
         models.Chatcmpl: The response from the API.
     """
-    from engine.restricted.oai import (
-        create_chatcmpl_models,
-        logger,
-        openai_chatcmpl,
-    )
+    from engine.oai import create_chatcmpl_models, logger, openai_chatcmpl
 
     request = request.model_dump()
 

@@ -15,6 +15,7 @@ from pathlib import Path
 
 from config.db import db_config
 from config.django import django_config
+from config.logger import logger_config
 from utils import formatter
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -125,7 +126,7 @@ AUTH_USER_MODEL = "core.User"
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = django_config.time_zone
 
 USE_I18N = True
 
@@ -172,6 +173,7 @@ SPECTACULAR_SETTINGS = {
 
 LOGGING = {
     "version": 1,
+    "disable_existing_loggers": False,
     "formatters": {
         "colored": {
             "()": formatter.ColoredFormatter,
@@ -185,5 +187,6 @@ LOGGING = {
     },
     "root": {
         "handlers": ["console"],
+        "level": logger_config.level,
     },
 }

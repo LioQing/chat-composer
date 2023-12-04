@@ -10,7 +10,6 @@ from rest_framework import (
 )
 
 import engine.pipeline
-from config.logger import logger_config
 
 from . import models, serializers
 
@@ -194,7 +193,6 @@ class PipelineRunView(generics.CreateAPIView, views.APIView):
     def create(self, request, id: int, *args, **kwargs):
         """Run the pipeline"""
         logger = logging.getLogger(__name__)
-        logger.setLevel(logger_config.level)
 
         try:
             serializer = self.get_serializer(data=request.data)

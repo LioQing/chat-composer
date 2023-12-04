@@ -4,8 +4,6 @@ from typing import Any, Dict
 
 from django.db.models import QuerySet
 
-import engine.restricted.oai
-from config.logger import logger_config
 from core import exceptions, models
 
 from . import oai
@@ -14,10 +12,6 @@ from . import oai
 def run(pipeline: models.Pipeline, user_message: str) -> Dict[str, Any]:
     """Run the pipeline"""
     logger = logging.getLogger(__name__)
-    logger.setLevel(logger_config.level)
-
-    if not pipeline.is_safe:
-        raise exceptions.UnsafePipeline()
 
     logger.info(f"Running pipeline {pipeline.name}")
 
@@ -43,11 +37,10 @@ def run_component(
 ) -> Dict[str, Any]:
     """Run a component"""
     logger = logging.getLogger(__name__)
-    logger.setLevel(logger_config.level)
     logger.info(f"Running component {component.name}")
-    logger.debug(component.code)
+    logger.debug(f"Code:\n{component.code}")
 
-    with engine.restricted.oai.init_oai(component):
+    with oai.init(component):
         # Compile the code
         byte_code = compile(
             component.code, f"{component.function_name}.py", "exec"

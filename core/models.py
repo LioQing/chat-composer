@@ -16,6 +16,10 @@ class User(AbstractUser):
     class Meta(AbstractUser.Meta):
         swappable = "AUTH_USER_MODEL"
 
+    def get_containment_name(self) -> str:
+        """Get the name of the containment"""
+        return f"chat-composer-containment-{self.username}"
+
 
 class Component(models.Model):
     """Component model"""
@@ -93,6 +97,10 @@ class Pipeline(models.Model):
                 "component_id", flat=True
             )
         ).order_by("componentinstance__order")
+
+    def get_containment_directory(self) -> str:
+        """Get the directory name containing this pipeline"""
+        return f"{self.id}"
 
 
 class ComponentInstance(models.Model):

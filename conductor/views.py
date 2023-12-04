@@ -11,11 +11,11 @@ from rest_framework import generics
 from rest_framework import permissions as rest_permissions
 from rest_framework import views, viewsets
 
+import engine.oai
 import engine.oai.api
 import engine.pipeline
-import engine.restricted.oai
-from config.logger import logger_config
 from core import models
+from engine.containment import containment
 from rest_auth import permissions
 
 from . import exceptions, pagination, serializers
@@ -81,11 +81,6 @@ class ConductorPipelineDeleteView(
     queryset = models.Pipeline.objects.all()
     serializer_class = serializers.ConductorPipelineDeleteSerializer
     permission_classes = [permissions.IsWhitelisted]
-
-    def perform_destroy(self, instance: models.Pipeline):
-        """Set the pipeline as inactive"""
-        instance.is_active = False
-        instance.save()
 
     def get_queryset(self):
         """Return the pipelines owned by the user"""
@@ -234,9 +229,6 @@ class ConductorPipelineComponentInstanceDeleteView(
 
     def perform_destroy(self, instance: models.ComponentInstance):
         """Set the component instance as inactive"""
-        instance.is_active = False
-        instance.save()
-
         # Reorder the component instances
         for (
             component_instance
@@ -244,6 +236,9 @@ class ConductorPipelineComponentInstanceDeleteView(
             if component_instance.order > instance.order:
                 component_instance.order -= 1
                 component_instance.save()
+
+        # Delete the component instance
+        instance.delete()
 
     def get_queryset(self):
         """Return the component instances owned by the user"""
@@ -302,7 +297,6 @@ class ConductorPipelineSaveView(views.APIView):
         pipeline.save()
 
         # For each component, save them
-        code_changed = False
         for component in serializer.validated_data["components"]:
             component_instance = models.ComponentInstance.objects.get(
                 id=component["id"]
@@ -310,10 +304,6 @@ class ConductorPipelineSaveView(views.APIView):
             component_instance.order = component["order"]
             component_instance.is_enabled = component["is_enabled"]
             component_instance.save()
-
-            # If the code has changed, make unsafe
-            if component_instance.component.code != component["code"]:
-                code_changed = True
 
             component_instance.component.name = component["name"]
             component_instance.component.function_name = component[
@@ -323,11 +313,6 @@ class ConductorPipelineSaveView(views.APIView):
             component_instance.component.code = component["code"]
             component_instance.component.state = component["state"]
             component_instance.component.save()
-
-        # If the code has changed, make unsafe
-        if code_changed:
-            pipeline.is_safe = False
-            pipeline.save()
 
         return views.Response(serializer.data)
 
@@ -384,7 +369,6 @@ class ConductorChatSendView(
     def post(self, request: views.Request, pk: int, *args, **kwargs):
         """Run the chat"""
         logger = logging.getLogger(__name__)
-        logger.setLevel(logger_config.level)
 
         try:
             serializer: serializers.ConductorChatSendSerializer = (
@@ -396,6 +380,10 @@ class ConductorChatSendView(
             pipeline: models.Pipeline = models.Pipeline.objects.filter(
                 user=request.user
             ).get(id=pk)
+
+            # TODO: delete this
+            containment.run_pipeline(pipeline)
+
             try:
                 pipeline_data = engine.pipeline.run(pipeline, user_message)
             except Exception:
@@ -425,7 +413,6 @@ class ConductorChatSendView(
             import traceback
 
             traceback.print_exc()
-            logger.error(e)
             raise e
 
 
@@ -546,7 +533,7 @@ class ConductorChatOaiChatcmplView(views.APIView):
         )
 
         response = None
-        with engine.restricted.oai.init_oai(component):
+        with engine.oai.init(component):
             try:
                 request_args = serializer.validated_data["request"]
                 chatcmpl_request = engine.oai.api.ChatcmplRequest(
