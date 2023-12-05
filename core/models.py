@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import QuerySet
 
-from . import managers, validators
+from . import enums, managers, validators
 
 
 class User(AbstractUser):
@@ -42,9 +42,16 @@ class Component(models.Model):
         }
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255)
     function_name = models.CharField(
-        max_length=255, validators=[validators.validate_function_name]
+        max_length=255,
+        validators=[validators.validate_function_name],
+    )
+    name = models.CharField(max_length=255)
+    arguments = models.JSONField(default=dict)
+    return_type = models.CharField(
+        max_length=255,
+        choices=enums.ReturnType.choices(),
+        default=enums.ReturnType.NONE,
     )
     description = models.JSONField(default=component_description_default)
     code = models.TextField()
@@ -73,10 +80,27 @@ class Component(models.Model):
 class Pipeline(models.Model):
     """Pipeline model"""
 
+    def pipeline_description_default():
+        """Default description for a pipeline"""
+        return {
+            "type": "doc",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Description",
+                        },
+                    ],
+                },
+            ],
+        }
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     state = models.JSONField(default=dict)
-    is_safe = models.BooleanField(default=False)
+    description = models.JSONField(default=pipeline_description_default)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

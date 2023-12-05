@@ -77,6 +77,11 @@ class Containment:
         except NotFound:
             return False
 
+    def user_container_is_running(self, user: models.User) -> bool:
+        """Check if the given user's container is running"""
+        container = self.get_user_container(user)
+        return container.status == "running"
+
     def create_user_containers(self):
         """Create containers for all users"""
         for user in models.User.objects.all():
@@ -84,24 +89,31 @@ class Containment:
 
     def create_user_container(self, user: models.User):
         """Create a container for the given user"""
-        self.logger.info(f"Creating container for user {user.username}")
-
-        # Remove container if it exists
-        if self.user_has_container(user):
-            self.delete_user_container(user)
-
         # Create container
-        container = self.client.containers.run(
-            containment_config.image,
-            detach=True,
-            tty=True,
-            name=user.get_containment_name(),
-        )
+        if not self.user_has_container(user):
+            self.logger.info(f"Creating container for user {user.username}")
+            self.client.containers.run(
+                containment_config.image,
+                detach=True,
+                tty=True,
+                name=user.get_containment_name(),
+            )
+
+        container = self.get_user_container(user)
+
+        # Run container
+        if not self.user_container_is_running(user):
+            self.logger.info(f"Starting container for user {user.username}")
+            container.start()
 
         # Create composer directory
-        self.container_exec_run(
-            container, f"mkdir {containment_config.base_directory}"
+        result = container.exec_run(
+            f"test -d {containment_config.base_directory}"
         )
+        if result.exit_code != 0:
+            self.container_exec_run(
+                container, f"mkdir {containment_config.base_directory}"
+            )
 
         # Create all pipeline directories
         for pipeline in user.pipeline_set.all():
@@ -116,23 +128,30 @@ class Containment:
             f"{pipeline.get_containment_directory()}"
         )
 
-        self.logger.info(
-            f"Creating directory for pipeline {pipeline.name} "
-            f"for user {pipeline.user.username} under {workdir}"
-        )
-
         # Make directory
-        self.container_exec_run(
-            container,
-            f"mkdir {workdir}",
-        )
+        result = container.exec_run(f"test -d {workdir}")
+        if result.exit_code != 0:
+            self.logger.info(
+                f"Creating directory for pipeline {pipeline.name} "
+                f"for user {pipeline.user.username} under {workdir}"
+            )
+            self.container_exec_run(
+                container,
+                f"mkdir {workdir}",
+            )
 
         # Create python environment
-        self.container_exec_run(
+        result = self.container_exec_run(
             container,
-            f"python3 -m venv {containment_config.python_venv}",
-            workdir=workdir,
+            "python --version",
         )
+
+        if "python 3.11" not in result.lower():
+            self.container_exec_run(
+                container,
+                f"python3 -m venv {containment_config.python_venv}",
+                workdir=workdir,
+            )
 
     def delete_user_container(self, user: models.User):
         """Delete the container for the given user"""

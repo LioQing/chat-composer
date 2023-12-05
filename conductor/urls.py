@@ -5,10 +5,14 @@ from . import views
 
 router = routers.SimpleRouter()
 router.register(r"pipeline", views.ConductorPipelineView)
-router.register(r"pipeline/state", views.ConductorPipelineStateView)
+router.register(r"pipeline/attributes", views.ConductorPipelineAttributesView)
 router.register(r"pipeline/new", views.ConductorPipelineNewView)
 router.register(r"pipeline/delete", views.ConductorPipelineDeleteView)
 router.register(r"pipeline/rename", views.ConductorPipelineRenameView)
+router.register(
+    r"component/details",
+    views.ConductorComponentDetailsView,
+)
 router.register(
     r"pipeline/component-instance",
     views.ConductorPipelineComponentInstanceView,
@@ -30,20 +34,12 @@ router.register(
     views.ConductorChatPipelineView,
 )
 router.register(
-    r"component/details",
-    views.ConductorComponentDetailsView,
-)
-router.register(
     r"admin/create-user",
     views.ConductorAdminCreateUserView,
 )
 router.register(
     r"admin/make-template",
     views.ConductorAdminMakeTemplateView,
-)
-router.register(
-    r"admin/make-safe",
-    views.ConductorAdminMakeSafeView,
 )
 
 urlpatterns = [

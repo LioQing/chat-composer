@@ -1,3 +1,5 @@
+import sys
+
 from django.apps import AppConfig
 
 
@@ -7,6 +9,7 @@ class CoreConfig(AppConfig):
 
     def ready(self):
         """Run when the app is ready"""
-        from engine.containment import containment
+        if "runserver" in sys.argv:
+            from engine.containment import containment
 
-        containment.create_user_containers()
+            containment.create_user_containers()

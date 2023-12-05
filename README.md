@@ -13,8 +13,10 @@ erDiagram
 
     Component {
         ManyToOne(User) user FK
-        Text name
         Text function_name
+        Text name
+        JSON arguments
+        Text return_type
         JSON description
         Text code
         JSON state
@@ -27,8 +29,8 @@ erDiagram
         ManyToMany(Component) components FK "through ComponentInstance"
         Text name
         JSON state
+        JSON description
         Boolean is_active
-        Boolean is_safe
         DateTime created_at
     }
 

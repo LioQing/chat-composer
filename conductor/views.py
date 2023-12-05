@@ -38,14 +38,14 @@ class ConductorPipelineView(
         return self.queryset.filter(user=self.request.user)
 
 
-class ConductorPipelineStateView(
+class ConductorPipelineAttributesView(
     generics.RetrieveAPIView,
     viewsets.GenericViewSet,
 ):
-    """Viewset for retrieving a pipeline's state"""
+    """Viewset for retrieving a pipeline's attributes"""
 
     queryset = models.Pipeline.objects.all()
-    serializer_class = serializers.ConductorPipelineStateSerializer
+    serializer_class = serializers.ConductorPipelineAttributesSerializer
     permission_classes = [permissions.IsWhitelisted]
 
     def get_queryset(self):
@@ -180,8 +180,10 @@ class ConductorPipelineComponentInstanceNewView(
             )
             component = models.Component.objects.create(
                 user=self.request.user,
-                name=template_component.name,
                 function_name=template_component.function_name,
+                name=template_component.name,
+                arguments=template_component.arguments,
+                return_type=template_component.return_type,
                 description=template_component.description,
                 code=template_component.code,
                 state=template_component.state,
@@ -204,8 +206,10 @@ class ConductorPipelineComponentInstanceNewView(
         # Fill serializer with component instance data
         serializer.instance = component_instance
         serializer.validated_data["component_id"] = component.id
-        serializer.validated_data["name"] = component.name
         serializer.validated_data["function_name"] = component.function_name
+        serializer.validated_data["name"] = component.name
+        serializer.validated_data["arguments"] = component.arguments
+        serializer.validated_data["return_type"] = component.return_type
         serializer.validated_data["description"] = component.description
         serializer.validated_data["code"] = component.code
         serializer.validated_data["state"] = component.state
@@ -291,9 +295,10 @@ class ConductorPipelineSaveView(views.APIView):
 
         pipeline = models.Pipeline.objects.filter(user=request.user).get(id=pk)
 
-        # Save the pipeline name
+        # Save the pipeline attributes
         pipeline.name = serializer.validated_data["name"]
         pipeline.state = serializer.validated_data["state"]
+        pipeline.description = serializer.validated_data["description"]
         pipeline.save()
 
         # For each component, save them
@@ -305,10 +310,12 @@ class ConductorPipelineSaveView(views.APIView):
             component_instance.is_enabled = component["is_enabled"]
             component_instance.save()
 
-            component_instance.component.name = component["name"]
             component_instance.component.function_name = component[
                 "function_name"
             ]
+            component_instance.component.name = component["name"]
+            component_instance.component.arguments = component["arguments"]
+            component_instance.component.return_type = component["return_type"]
             component_instance.component.description = component["description"]
             component_instance.component.code = component["code"]
             component_instance.component.state = component["state"]
@@ -615,17 +622,5 @@ class ConductorAdminMakeTemplateView(
 
     queryset = models.Component.objects.all()
     serializer_class = serializers.ConductorAdminMakeTemplateSerializer
-    permission_classes = [rest_permissions.IsAdminUser]
-    http_method_names = ["patch"]
-
-
-class ConductorAdminMakeSafeView(
-    generics.UpdateAPIView,
-    viewsets.GenericViewSet,
-):
-    """View for making a pipeline safe"""
-
-    queryset = models.Pipeline.objects.all()
-    serializer_class = serializers.ConductorAdminMakeSafeSerializer
     permission_classes = [rest_permissions.IsAdminUser]
     http_method_names = ["patch"]
