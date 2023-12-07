@@ -14,6 +14,7 @@ def chatcmpl(request: ChatcmplRequest) -> Chatcmpl:
     Returns:
         models.Chatcmpl: The response from the API.
     """
+    # containment: not contained
     from engine.oai import create_chatcmpl_models, logger, openai_chatcmpl
 
     request = request.model_dump()
@@ -28,3 +29,6 @@ def chatcmpl(request: ChatcmplRequest) -> Chatcmpl:
     create_chatcmpl_models(request, response)
 
     return response
+    # containment: else
+    # pass
+    # containment: end

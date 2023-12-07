@@ -5,6 +5,24 @@ import core.models
 from django.db import migrations, models
 
 
+def pipeline_description_default():
+    """Default description for a pipeline"""
+    return {
+        "type": "doc",
+        "content": [
+            {
+                "type": "paragraph",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Description",
+                    },
+                ],
+            },
+        ],
+    }
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -15,7 +33,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='pipeline',
             name='description',
-            field=models.JSONField(default=core.models.Pipeline.pipeline_description_default),
+            field=models.JSONField(default=pipeline_description_default),
         ),
         migrations.AlterField(
             model_name='component',

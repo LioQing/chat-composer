@@ -3,8 +3,8 @@ from rest_framework import serializers
 from core import models
 
 
-class ConductorPipelineSerializer(serializers.ModelSerializer):
-    """Serializer for the PipelineView"""
+class ConductorPipelinesSerializer(serializers.ModelSerializer):
+    """Serializer for the PipelinesView"""
 
     class Meta:
         model = models.Pipeline
@@ -91,8 +91,8 @@ class ConductorPipelineComponentInstanceSerializer(
     return_type = serializers.CharField(
         source="component.return_type", read_only=True
     )
-    description = serializers.JSONField(
-        source="component.description", read_only=True
+    description = serializers.CharField(
+        source="component.description", read_only=True, allow_blank=True
     )
     code = serializers.CharField(source="component.code", read_only=True)
     state = serializers.JSONField(source="component.state", read_only=True)
@@ -173,7 +173,7 @@ class ConductorPipelineSaveComponentInstanceSerializer(serializers.Serializer):
     name = serializers.CharField(required=True)
     arguments = serializers.JSONField(required=True)
     return_type = serializers.CharField(required=True)
-    description = serializers.JSONField(required=True)
+    description = serializers.CharField(required=True)
     code = serializers.CharField(required=True)
     state = serializers.JSONField(required=True)
 
@@ -183,7 +183,7 @@ class ConductorPipelineSaveSerializer(serializers.Serializer):
 
     name = serializers.CharField(required=True)
     state = serializers.JSONField(required=True)
-    description = serializers.JSONField(required=True)
+    description = serializers.CharField(required=True)
     components = ConductorPipelineSaveComponentInstanceSerializer(
         many=True, required=True
     )

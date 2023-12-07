@@ -1,4 +1,8 @@
 import logging
+import os
+import tarfile
+from enum import Enum, StrEnum
+from pathlib import Path
 from typing import Optional
 
 import docker
@@ -7,6 +11,194 @@ from docker.models.containers import Container
 
 from config.containment import containment_config
 from core import models
+
+
+class ContainmentFileSpecializer:
+    """Specialize the containment files.
+
+    This class provides functionality for specializing the containment files.
+    """
+
+    class __SpecializerState(Enum):
+        """The state of the specializer."""
+
+        NONE = 0
+        NOT_CONTAINED = 1
+        CONTAINED = 2
+
+    class __SpecializerMarker(StrEnum):
+        """The markers in the files."""
+
+        CONTAINED_MARKER = "# containment: contained"
+        NOT_CONTAINED_MARKER = "# containment: not contained"
+        ELSE_MARKER = "# containment: else"
+        END_MARKER = "# containment: end"
+
+    tmp_dir_name: str
+
+    def __init__(self, tmp_dir_name: str = "containment_tmp"):
+        """Initialize the specializer."""
+        self.tmp_dir_name = tmp_dir_name
+
+    def __enter__(self):
+        """Enter the context.
+
+        Generates a temporary directory containing the specialized
+        files. The files are specialized from the current directory.
+        """
+        dir = Path(__file__).resolve().parent
+        dir_tmp = dir / self.tmp_dir_name
+
+        if not dir_tmp.exists():
+            dir_tmp.mkdir()
+            dir_tmp.chmod(0o777)
+
+        for file in dir.iterdir():
+            if file.name == self.tmp_dir_name:
+                continue
+
+            self.specialize(file)
+
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit the context.
+
+        Deletes the temporary directory.
+        """
+        dir = Path(__file__).resolve().parent
+        dir_tmp = dir / self.tmp_dir_name
+
+        # Remove dir
+        def rmdir(path: Path):
+            """Remove the given directory."""
+            for file in path.iterdir():
+                if file.is_dir():
+                    rmdir(file)
+                else:
+                    file.unlink()
+            path.rmdir()
+
+        rmdir(dir_tmp)
+
+        # Remove tar
+        tar_path = dir / f"{self.tmp_dir_name}.tar.gz"
+
+        if tar_path.exists():
+            tar_path.unlink()
+
+    def specialize(self, path: Path):
+        """Specialize the given file or directory.
+
+        Give the path relative to the current directory.
+        """
+        dir = Path(__file__).resolve().parent
+        dir_tmp = dir / self.tmp_dir_name
+        dir_tmp_path = dir_tmp / path.relative_to(dir)
+
+        if path.name == "__pycache__":
+            return
+
+        if path.is_dir():
+            if not dir_tmp_path.exists():
+                dir_tmp_path.mkdir()
+                dir_tmp_path.chmod(0o777)
+
+            for file in path.iterdir():
+                self.specialize(file)
+
+            return
+
+        if dir_tmp_path.exists():
+            dir_tmp_path.unlink()
+
+        with open(path, "r") as file:
+            content = file.read()
+
+        content = self.specialize_content(content, path)
+
+        with open(dir_tmp_path, "w") as file:
+            file.write(content)
+
+    def specialize_content(
+        self, content: str, path: Optional[Path] = None
+    ) -> str:
+        """Specialize the given content."""
+        state = self.__SpecializerState.NONE
+        comment_indent = 0
+
+        lines = content.split("\n")
+
+        for i, line in enumerate(lines):
+            stripped_line = line.strip()
+
+            if stripped_line == self.__SpecializerMarker.CONTAINED_MARKER:
+                state = self.__SpecializerState.CONTAINED
+                comment_indent = len(line) - len(line.lstrip())
+            elif (
+                stripped_line == self.__SpecializerMarker.NOT_CONTAINED_MARKER
+            ):
+                state = self.__SpecializerState.NOT_CONTAINED
+                comment_indent = len(line) - len(line.lstrip())
+            elif stripped_line == self.__SpecializerMarker.ELSE_MARKER:
+                if state == self.__SpecializerState.CONTAINED:
+                    state = self.__SpecializerState.NOT_CONTAINED
+                elif state == self.__SpecializerState.NOT_CONTAINED:
+                    state = self.__SpecializerState.CONTAINED
+                else:
+                    raise RuntimeError(
+                        "Cannot use else marker without contained or not"
+                        f" contained marker in line {i}"
+                        f" of file {path}"
+                        if path
+                        else ""
+                    )
+            elif stripped_line == self.__SpecializerMarker.END_MARKER:
+                if state != self.__SpecializerState.NONE:
+                    state = self.__SpecializerState.NONE
+                else:
+                    print("TESTESTEST", stripped_line)
+                    raise RuntimeError(
+                        "Cannot use end marker without contained, not"
+                        f" contained, or else marker in line {i}"
+                        f" of file {path}"
+                        if path
+                        else ""
+                    )
+            else:
+                if state == self.__SpecializerState.CONTAINED:
+                    if stripped_line.startswith("# "):
+                        lines[i] = line.replace("# ", "", 1)
+                elif state == self.__SpecializerState.NOT_CONTAINED:
+                    if stripped_line != "":
+                        indent = len(line) - len(line.lstrip())
+                        if indent < comment_indent:
+                            lines[i] = indent * " " + "# " + line.lstrip()
+                        else:
+                            lines[i] = (
+                                comment_indent * " "
+                                + "# "
+                                + line[comment_indent:]
+                            )
+
+        return "\n".join(lines)
+
+    def to_tar(self) -> bytes:
+        """Convert the temporary directory to a tar file."""
+        dir = Path(__file__).resolve().parent
+        dir_tmp = dir / self.tmp_dir_name
+
+        if not dir_tmp.exists():
+            raise RuntimeError("Temporary directory does not exist")
+
+        tar_path = dir / f"{self.tmp_dir_name}.tar.gz"
+
+        with tarfile.open(tar_path, "w:gz") as tar:
+            for file in os.listdir(dir_tmp):
+                tar.add(dir_tmp / file, arcname=file)
+
+        with open(tar_path, "rb") as tar:
+            return tar.read()
 
 
 class Containment:
@@ -170,7 +362,7 @@ class Containment:
             f"{pipeline.get_containment_directory()}",
         )
 
-    def run_pipeline(self, pipeline: models.Pipeline):
+    def run_pipeline(self, pipeline: models.Pipeline, user_message: str):
         """Run the given pipeline"""
         container = self.get_user_container(pipeline.user)
 
@@ -179,10 +371,15 @@ class Containment:
             f"{pipeline.get_containment_directory()}"
         )
 
+        # Specialize files
+        with ContainmentFileSpecializer() as specializer:
+            if not container.put_archive(workdir, specializer.to_tar()):
+                raise RuntimeError("Unable to copy files to container")
+
         # Run pipeline
         self.container_exec_run(
             container,
-            "python -c \"print('Hello world')\"",
+            "python -m main",
             workdir=workdir,
             pipeline=pipeline,
         )

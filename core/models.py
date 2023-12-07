@@ -24,23 +24,6 @@ class User(AbstractUser):
 class Component(models.Model):
     """Component model"""
 
-    def component_description_default():
-        """Default description for a component"""
-        return {
-            "type": "doc",
-            "content": [
-                {
-                    "type": "paragraph",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "Description",
-                        },
-                    ],
-                },
-            ],
-        }
-
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     function_name = models.CharField(
         max_length=255,
@@ -53,7 +36,7 @@ class Component(models.Model):
         choices=enums.ReturnType.choices(),
         default=enums.ReturnType.NONE,
     )
-    description = models.JSONField(default=component_description_default)
+    description = models.TextField(default="")
     code = models.TextField()
     state = models.JSONField(default=dict)
     is_template = models.BooleanField(default=False)
@@ -80,27 +63,10 @@ class Component(models.Model):
 class Pipeline(models.Model):
     """Pipeline model"""
 
-    def pipeline_description_default():
-        """Default description for a pipeline"""
-        return {
-            "type": "doc",
-            "content": [
-                {
-                    "type": "paragraph",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "Description",
-                        },
-                    ],
-                },
-            ],
-        }
-
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     state = models.JSONField(default=dict)
-    description = models.JSONField(default=pipeline_description_default)
+    description = models.TextField(default="")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

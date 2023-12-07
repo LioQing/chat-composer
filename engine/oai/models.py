@@ -1,10 +1,14 @@
 """Models for OpenAI API."""
 
+# isort:skip_file
+
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, model_serializer
 
+# containment: not contained
 from config.openai import openai_config
+# containment: end
 
 from .enums import FinishReason, Role
 
@@ -207,8 +211,13 @@ class ChatcmplRequest(BaseModel):
         user (Optional[str]): The user. Defaults to None.
     """
 
+    # containment: not contained
     deployment_id: str = Field(openai_config.deployment)
     model: str = Field(openai_config.model)
+    # containment: else
+    # deployment_id: Optional[str] = Field(None)
+    # model: Optional[str] = Field(None)
+    # containment: end
     messages: List[Message]
     frequency_penalty: float = Field(0.0, ge=-2.0, le=2.0)
     function_call: FunctionCallRequest = Field(

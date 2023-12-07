@@ -21,14 +21,14 @@ from rest_auth import permissions
 from . import exceptions, pagination, serializers
 
 
-class ConductorPipelineView(
+class ConductorPipelinesView(
     generics.ListAPIView,
     viewsets.GenericViewSet,
 ):
     """Viewset for the pipeline list"""
 
     queryset = models.Pipeline.objects.all()
-    serializer_class = serializers.ConductorPipelineSerializer
+    serializer_class = serializers.ConductorPipelinesSerializer
     permission_classes = [permissions.IsWhitelisted]
 
     def get_queryset(self):
@@ -389,7 +389,7 @@ class ConductorChatSendView(
             ).get(id=pk)
 
             # TODO: delete this
-            containment.run_pipeline(pipeline)
+            containment.run_pipeline(pipeline, user_message)
 
             try:
                 pipeline_data = engine.pipeline.run(pipeline, user_message)

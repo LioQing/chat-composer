@@ -17,7 +17,7 @@ erDiagram
         Text name
         JSON arguments
         Text return_type
-        JSON description
+        Text description
         Text code
         JSON state
         Boolean is_template
@@ -29,7 +29,7 @@ erDiagram
         ManyToMany(Component) components FK "through ComponentInstance"
         Text name
         JSON state
-        JSON description
+        Text description
         Boolean is_active
         DateTime created_at
     }

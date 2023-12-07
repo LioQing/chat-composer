@@ -1,5 +1,6 @@
 """OpenAI module."""
 
+# containment: not contained
 import logging
 from typing import Any, Dict, Optional
 
@@ -90,3 +91,6 @@ def create_chatcmpl_models(request: Dict[str, Any], response: Chatcmpl):
                 role=choice.message.role,
             ),
         )
+
+
+# containment: end

@@ -4,7 +4,7 @@ from rest_framework import routers
 from . import views
 
 router = routers.SimpleRouter()
-router.register(r"pipeline", views.ConductorPipelineView)
+router.register(r"pipelines", views.ConductorPipelinesView)
 router.register(r"pipeline/attributes", views.ConductorPipelineAttributesView)
 router.register(r"pipeline/new", views.ConductorPipelineNewView)
 router.register(r"pipeline/delete", views.ConductorPipelineDeleteView)
