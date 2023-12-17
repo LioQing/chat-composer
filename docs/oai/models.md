@@ -9,7 +9,7 @@ Models for OpenAI API.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L11"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L14"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FunctionCall`
 Function call by chat completion.
@@ -60,7 +60,7 @@ Returns the set of fields that have been set on this model instance.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L23"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L26"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `Message`
 Message by chat completion.
@@ -112,7 +112,7 @@ Returns the set of fields that have been set on this model instance.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L39"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L42"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `Message.model_dump`
 
@@ -125,7 +125,7 @@ Dump the model
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L53"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L56"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `Choice`
 Message choice by chat completion.
@@ -177,7 +177,7 @@ Returns the set of fields that have been set on this model instance.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L67"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L70"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `Usage`
 Token usage by chat completion.
@@ -229,7 +229,7 @@ Returns the set of fields that have been set on this model instance.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L81"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L84"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `Chatcmpl`
 Chat completion response by OpenAI API.
@@ -283,16 +283,17 @@ Returns the set of fields that have been set on this model instance.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L100"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L103"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FunctionCallRequest`
 Function call for chat completion to call.
+
+If you wish to use auto or none, simply supply them as strings to the ChatcmplRequest.
 
 
 
 **Attributes:**
 
- - <b>`auto`</b> (bool):  Whether to automatically call the function.
  - <b>`name`</b> (str):  The name of the function to call.
 
 
@@ -331,22 +332,10 @@ Returns the set of fields that have been set on this model instance.
 
 
 
----
-
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L111"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>method</kbd> `FunctionCallRequest.model_dump`
-
-```python
-model_dump() → Union[Dict[str, Any], str]
-```
-
-Dump the model
-
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L122"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L116"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `Parameter`
 Function parameter.
@@ -398,7 +387,7 @@ Returns the set of fields that have been set on this model instance.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L138"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L132"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `Parameter.model_dump`
 
@@ -411,7 +400,7 @@ Dump the model
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L149"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L143"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `Parameters`
 Parameters for function.
@@ -460,7 +449,7 @@ Returns the set of fields that have been set on this model instance.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L158"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L152"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `Parameters.model_dump`
 
@@ -473,7 +462,7 @@ Dump the model
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L174"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L168"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `Function`
 Function.
@@ -525,7 +514,7 @@ Returns the set of fields that have been set on this model instance.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L188"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L182"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ChatcmplRequest`
 Chat completion request body.
@@ -587,7 +576,7 @@ Returns the set of fields that have been set on this model instance.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L226"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/models.py#L225"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `ChatcmplRequest.model_dump`
 

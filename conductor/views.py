@@ -10,10 +10,9 @@ from pydantic import ValidationError
 from rest_framework import generics
 from rest_framework import permissions as rest_permissions
 from rest_framework import views, viewsets
+from rest_framework_simplejwt.tokens import RefreshToken
 
-import engine.oai
-import engine.oai.api
-import engine.pipeline
+import engine.modules.oai
 from core import models
 from engine.containment import containment
 from rest_auth import permissions
@@ -297,6 +296,7 @@ class ConductorPipelineSaveView(views.APIView):
 
         # Save the pipeline attributes
         pipeline.name = serializer.validated_data["name"]
+        pipeline.response = serializer.validated_data["response"]
         pipeline.state = serializer.validated_data["state"]
         pipeline.description = serializer.validated_data["description"]
         pipeline.save()
@@ -375,52 +375,20 @@ class ConductorChatSendView(
 
     def post(self, request: views.Request, pk: int, *args, **kwargs):
         """Run the chat"""
-        logger = logging.getLogger(__name__)
+        serializer: serializers.ConductorChatSendSerializer = (
+            self.serializer_class(data=request.data)
+        )
+        serializer.is_valid(raise_exception=True)
+        user_message: str = serializer.validated_data["user_message"]
 
-        try:
-            serializer: serializers.ConductorChatSendSerializer = (
-                self.serializer_class(data=request.data)
-            )
-            serializer.is_valid(raise_exception=True)
-            user_message: str = serializer.validated_data["user_message"]
+        pipeline: models.Pipeline = models.Pipeline.objects.filter(
+            user=request.user
+        ).get(id=pk)
 
-            pipeline: models.Pipeline = models.Pipeline.objects.filter(
-                user=request.user
-            ).get(id=pk)
+        refresh: RefreshToken = RefreshToken.for_user(request.user)
+        containment.run_pipeline(pipeline, user_message, refresh)
 
-            # TODO: delete this
-            containment.run_pipeline(pipeline, user_message)
-
-            try:
-                pipeline_data = engine.pipeline.run(pipeline, user_message)
-            except Exception:
-                import traceback
-
-                pipeline_data = {
-                    "api_message": traceback.format_exc(),
-                }
-
-            serializer.validated_data["api_message"] = str(
-                pipeline_data.get("api_message", "")
-            )
-            serializer.is_valid(raise_exception=True)
-
-            # Save to chat
-            models.Chat.objects.create(
-                pipeline=pipeline,
-                user_message=user_message,
-                api_message=pipeline_data.get(
-                    "api_message", "<no api message>"
-                ),
-            )
-
-            logger.debug(f"serializer: {serializer}")
-            return views.Response(serializer.data)
-        except Exception as e:
-            import traceback
-
-            traceback.print_exc()
-            raise e
+        return views.Response(serializer.data)
 
 
 @extend_schema_view(
@@ -458,23 +426,6 @@ class ConductorChatHistoryView(
         return self.get_paginated_response(serializer.data)
 
 
-class ConductorChatPipelineView(
-    generics.RetrieveAPIView,
-    viewsets.GenericViewSet,
-):
-    """View to get the pipeline for running in-browser chat"""
-
-    queryset = models.Pipeline.objects.all()
-    serializer_class = serializers.ConductorChatPipelineSerializer
-    permission_classes = [permissions.IsWhitelisted]
-
-    def get_queryset(self):
-        """Return the pipelines owned by the user"""
-        if self.request.user.is_staff:
-            return self.queryset.all()
-        return self.queryset.filter(user=self.request.user)
-
-
 class ConductorChatSaveChatView(views.APIView):
     """View to save chat"""
 
@@ -492,36 +443,48 @@ class ConductorChatSaveChatView(views.APIView):
         models.Chat.objects.create(
             pipeline=pipeline,
             user_message=serializer.validated_data["user_message"],
-            api_message=serializer.validated_data["api_message"],
+            resp_message=serializer.validated_data["resp_message"],
+            exit_code=serializer.validated_data["exit_code"],
         )
 
         return views.Response(serializer.data)
 
 
-class ConductorChatSaveStatesView(views.APIView):
-    """View to save states"""
+class ConductorChatStatesView(views.APIView):
+    """View to get the chat states"""
 
-    serializer_class = serializers.ConductorChatSaveStatesSerializer
+    serializer_class = serializers.ConductorChatStatesSerializer
     permission_classes = [permissions.IsWhitelisted]
 
-    def patch(self, request: views.Request, pk: int, *args, **kwargs):
-        """Save the states"""
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    def get(self, request: views.Request, pk: int, *args, **kwargs):
+        """Return the chat states"""
+        pipeline = models.Pipeline.objects.filter(user=request.user).get(id=pk)
 
-        component = models.Component.objects.filter(user=request.user).get(
-            id=pk
+        serializer = self.serializer_class(
+            {
+                "component_states": pipeline.get_components(),
+                "pipeline_state": pipeline.state,
+            }
         )
-
-        # Save the state
-        component.state = serializer.validated_data["state"]
-        component.save()
-
-        # Save the pipeline state
-        pipeline = component.get_pipeline()
-        pipeline.state = serializer.validated_data["pstate"]
-
         return views.Response(serializer.data)
+
+    def post(self, request: views.Request, pk: int, *args, **kwargs):
+        """Return the chat states"""
+        pipeline = models.Pipeline.objects.filter(user=request.user).get(id=pk)
+        components = pipeline.get_components()
+
+        component_states = request.data["component_states"]
+        pipeline_state = request.data["pipeline_state"]
+
+        for component_state in component_states:
+            component = components.get(id=component_state["id"])
+            component.state = component_state["state"]
+            component.save()
+
+        pipeline.state = pipeline_state
+        pipeline.save()
+
+        return views.Response()
 
 
 class ConductorChatOaiChatcmplView(views.APIView):
@@ -540,16 +503,16 @@ class ConductorChatOaiChatcmplView(views.APIView):
         )
 
         response = None
-        with engine.oai.init(component):
+        with engine.modules.composer.init_component(component.id):
             try:
                 request_args = serializer.validated_data["request"]
-                chatcmpl_request = engine.oai.api.ChatcmplRequest(
+                chatcmpl_request = engine.modules.oai.api.ChatcmplRequest(
                     **request_args
                 )
             except ValidationError as e:
                 raise exceptions.BadArgumentsException(str(e))
 
-            response = engine.oai.api.chatcmpl(chatcmpl_request)
+            response = engine.modules.oai.api.chatcmpl(chatcmpl_request)
 
         if response is None:
             raise ValueError("response is None")

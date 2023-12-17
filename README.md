@@ -26,8 +26,8 @@ erDiagram
 
     Pipeline {
         ManyToOne(User) user FK
-        ManyToMany(Component) components FK "through ComponentInstance"
         Text name
+        Text response
         JSON state
         Text description
         Boolean is_active
@@ -37,8 +37,8 @@ erDiagram
     Chat {
         ManyToOne(Pipeline) pipeline FK
         Text user_message
-        Text api_message
-        Boolean is_first
+        Text resp_message
+        Integer exit_code
         DateTime created_at
     }
 

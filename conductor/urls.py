@@ -30,10 +30,6 @@ router.register(
     views.ConductorChatHistoryView,
 )
 router.register(
-    r"chat/pipeline",
-    views.ConductorChatPipelineView,
-)
-router.register(
     r"admin/create-user",
     views.ConductorAdminCreateUserView,
 )
@@ -65,9 +61,9 @@ urlpatterns = [
         name="conductor-chat-save-chat",
     ),
     path(
-        "chat/save/states/<int:pk>/",
-        views.ConductorChatSaveStatesView.as_view(),
-        name="conductor-chat-save-states",
+        "chat/states/<int:pk>/",
+        views.ConductorChatStatesView.as_view(),
+        name="conductor-chat-states",
     ),
     path(
         "chat/oai/chatcmpl/<int:pk>/",

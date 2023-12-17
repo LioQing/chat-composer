@@ -3,13 +3,15 @@ import os
 import tarfile
 from enum import Enum, StrEnum
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional, Tuple
 
 import docker
 from docker.errors import NotFound
 from docker.models.containers import Container
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from config.containment import containment_config
+from config.web import web_config
 from core import models
 
 
@@ -29,16 +31,22 @@ class ContainmentFileSpecializer:
     class __SpecializerMarker(StrEnum):
         """The markers in the files."""
 
-        CONTAINED_MARKER = "# containment: contained"
-        NOT_CONTAINED_MARKER = "# containment: not contained"
-        ELSE_MARKER = "# containment: else"
-        END_MARKER = "# containment: end"
+        CONTAINED = "# containment: contained"
+        NOT_CONTAINED = "# containment: not contained"
+        ELSE = "# containment: else"
+        END = "# containment: end"
+        COMPONENTS = "# containment: components"
+        PIPELINE = "# containment: pipeline"
 
     tmp_dir_name: str
+    pipeline: models.Pipeline
 
-    def __init__(self, tmp_dir_name: str = "containment_tmp"):
+    def __init__(
+        self, pipeline: models.Pipeline, tmp_dir_name: str = "containment_tmp"
+    ):
         """Initialize the specializer."""
         self.tmp_dir_name = tmp_dir_name
+        self.pipeline = pipeline
 
     def __enter__(self):
         """Enter the context.
@@ -58,6 +66,8 @@ class ContainmentFileSpecializer:
                 continue
 
             self.specialize(file)
+
+        self.generate_components()
 
         return self
 
@@ -99,6 +109,9 @@ class ContainmentFileSpecializer:
         if path.name == "__pycache__":
             return
 
+        if path == Path(__file__).resolve():
+            return
+
         if path.is_dir():
             if not dir_tmp_path.exists():
                 dir_tmp_path.mkdir()
@@ -129,18 +142,16 @@ class ContainmentFileSpecializer:
 
         lines = content.split("\n")
 
-        for i, line in enumerate(lines):
+        for i, line in enumerate(lines.copy()):
             stripped_line = line.strip()
 
-            if stripped_line == self.__SpecializerMarker.CONTAINED_MARKER:
+            if stripped_line == self.__SpecializerMarker.CONTAINED:
                 state = self.__SpecializerState.CONTAINED
                 comment_indent = len(line) - len(line.lstrip())
-            elif (
-                stripped_line == self.__SpecializerMarker.NOT_CONTAINED_MARKER
-            ):
+            elif stripped_line == self.__SpecializerMarker.NOT_CONTAINED:
                 state = self.__SpecializerState.NOT_CONTAINED
                 comment_indent = len(line) - len(line.lstrip())
-            elif stripped_line == self.__SpecializerMarker.ELSE_MARKER:
+            elif stripped_line == self.__SpecializerMarker.ELSE:
                 if state == self.__SpecializerState.CONTAINED:
                     state = self.__SpecializerState.NOT_CONTAINED
                 elif state == self.__SpecializerState.NOT_CONTAINED:
@@ -153,11 +164,10 @@ class ContainmentFileSpecializer:
                         if path
                         else ""
                     )
-            elif stripped_line == self.__SpecializerMarker.END_MARKER:
+            elif stripped_line == self.__SpecializerMarker.END:
                 if state != self.__SpecializerState.NONE:
                     state = self.__SpecializerState.NONE
                 else:
-                    print("TESTESTEST", stripped_line)
                     raise RuntimeError(
                         "Cannot use end marker without contained, not"
                         f" contained, or else marker in line {i}"
@@ -165,6 +175,58 @@ class ContainmentFileSpecializer:
                         if path
                         else ""
                     )
+            elif stripped_line == self.__SpecializerMarker.COMPONENTS:
+                imports = [
+                    "from modules.composer import init_component,"
+                    " init_pipeline"
+                ]
+                for component in self.pipeline.get_components():
+                    fn = component.function_name
+                    imports.append(f"from .{fn} import {fn}")
+
+                lines[i] = "\n".join(imports)
+            elif stripped_line == self.__SpecializerMarker.PIPELINE:
+                statements = []
+                for component in self.pipeline.get_components():
+                    fn = component.function_name
+
+                    # Generate arguments
+                    arguments = "\n".join(
+                        [f"{' ' * 16}{l}" for l in component.get_arguments()]
+                    )
+
+                    # Generate arg for record
+                    arg_assigns = models.Component.get_json_arguments(
+                        component.arguments
+                    )
+                    arg_assigns[0] = f"{fn}.arg = {arg_assigns[0]}"
+                    arg_assigns = "\n".join(
+                        [f"{' ' * 12}{l}" for l in arg_assigns]
+                    )
+
+                    # Generate function call
+                    statements.append(
+                        f"        # {component.name}\n"
+                        f"        with init_component({component.id}):\n"
+                        f"{arg_assigns}\n"
+                        f"{' ' * 12}{fn}.ret = {fn}(\n"
+                        f"{arguments}\n"
+                        f"{' ' * 12})"
+                    )
+
+                statements.append(
+                    # fmt: off
+                    "        # Response\n"
+                    "        pipeline_helper.set_response"
+                    f"({self.pipeline.response})"
+                    # fmt: on
+                )
+
+                lines[i] = (
+                    f"    with init_pipeline({self.pipeline.id},"
+                    " user_message) as pipeline_helper:\n"
+                )
+                lines[i] += "\n\n".join(statements)
             else:
                 if state == self.__SpecializerState.CONTAINED:
                     if stripped_line.startswith("# "):
@@ -182,6 +244,22 @@ class ContainmentFileSpecializer:
                             )
 
         return "\n".join(lines)
+
+    def generate_components(self):
+        """Generate the components file."""
+        dir = Path(__file__).resolve().parent
+        dir_tmp = dir / self.tmp_dir_name / "pipeline"
+
+        # Delete old components file
+        for file in os.listdir(dir_tmp):
+            if file != "__init__.py":
+                os.remove(dir_tmp / file)
+
+        for component in self.pipeline.get_components():
+            component_path = dir_tmp / f"{component.function_name}.py"
+
+            with open(component_path, "w") as file:
+                file.write(component.code)
 
     def to_tar(self) -> bytes:
         """Convert the temporary directory to a tar file."""
@@ -218,17 +296,24 @@ class Containment:
         command: str,
         workdir: Optional[str] = None,
         pipeline: Optional[models.Pipeline] = None,
-    ) -> str:
+        env: Optional[Dict[str, str]] = None,
+        raise_for_exit_code: bool = True,
+        return_exit_code: bool = False,
+    ) -> str | Tuple[str, int]:
         """Run a command in a container"""
-        env = {
+        env_ = {
             "PYTHONUNBUFFERED": "1",
         }
+
         if pipeline:
-            env["PATH"] = (
+            env_["PATH"] = (
                 f"{containment_config.base_directory}/"
                 f"{pipeline.get_containment_directory()}/"
                 f"{containment_config.python_venv}/bin:$PATH"
             )
+
+        if env:
+            env_.update(env)
 
         self.logger.debug(
             f"Running command in container {container.name}: {command}"
@@ -237,12 +322,12 @@ class Containment:
         result = container.exec_run(
             command,
             workdir=workdir,
-            environment=env,
+            environment=env_,
         )
 
         output: str = result.output.decode("utf-8")
 
-        if result.exit_code != 0:
+        if result.exit_code != 0 and raise_for_exit_code:
             self.logger.error(
                 f"Exit code {result.exit_code} when running command {command}"
             )
@@ -254,6 +339,9 @@ class Containment:
             )
 
         self.logger.debug(f"Output: {output}")
+
+        if return_exit_code:
+            return output, result.exit_code
 
         return output
 
@@ -362,7 +450,12 @@ class Containment:
             f"{pipeline.get_containment_directory()}",
         )
 
-    def run_pipeline(self, pipeline: models.Pipeline, user_message: str):
+    def run_pipeline(
+        self,
+        pipeline: models.Pipeline,
+        user_message: str,
+        refresh: RefreshToken,
+    ):
         """Run the given pipeline"""
         container = self.get_user_container(pipeline.user)
 
@@ -372,16 +465,39 @@ class Containment:
         )
 
         # Specialize files
-        with ContainmentFileSpecializer() as specializer:
+        with ContainmentFileSpecializer(pipeline) as specializer:
+            # Remove old files except containment_config.python_venv
+            self.container_exec_run(
+                container,
+                "find . -mindepth 1 -maxdepth 1 -not -name"
+                f" {containment_config.python_venv} -exec rm -rf {{}} +",
+                workdir=workdir,
+            )
+
+            # Put archive in container
             if not container.put_archive(workdir, specializer.to_tar()):
                 raise RuntimeError("Unable to copy files to container")
 
-        # Run pipeline
+        # Install dependencies
         self.container_exec_run(
             container,
-            "python -m main",
+            "pip install -r requirements.txt",
             workdir=workdir,
             pipeline=pipeline,
+        )
+
+        # Run pipeline
+        sanitized_user_message = user_message.replace("'", r"'\''")
+        self.container_exec_run(
+            container,
+            f"python -m main '{sanitized_user_message}'",
+            workdir=workdir,
+            pipeline=pipeline,
+            env={
+                "CHAT_COMPOSER_ACCESS_TOKEN": refresh.access_token,
+                "CHAT_COMPOSER_REFRESH_TOKEN": str(refresh),
+                "CHAT_COMPOSER_PORT": web_config.port,
+            },
         )
 
 

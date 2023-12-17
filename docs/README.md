@@ -6,12 +6,6 @@ Pipeline in this context is a sequence of components chained together.
 
 The components are called in the order they are defined in the pipeline.
 
-The output of one component is the input of the next component, the exact details are defined in the [Component](#component) section.
-
-A pipeline may be marked safe, which means admin has approved it to be run on the backend server. However, if a safe pipeline is modified, it is marked unsafe and must be approved again.
-
-_Note: while unsafe pipelines can use pydantic, it can only use version v1.10 due to the [issue](https://github.com/pydantic/pydantic-core/issues/106#issuecomment-1749388613)_
-
 # Component
 
 Components are the building blocks of the pipeline. They provide the functionality to the pipeline.
@@ -63,7 +57,7 @@ def function_name(user_message, data):
 
 _Note: the python code is executed by [RestrictedPython](https://restrictedpython.readthedocs.io/en/latest/) with all the [restricted builtins](https://restrictedpython.readthedocs.io/en/latest/usage/api.html#restricted-builtins) provided._
 
-# API
+# Modules
 
 These are the modules that can be used in the code of the components.
 

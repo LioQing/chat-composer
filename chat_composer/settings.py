@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "corsheaders",
     "rest_framework",
+    "rest_framework_api_key",
     "core.apps.CoreConfig",
     "conductor.apps.ConductorConfig",
     "oai.apps.OaiConfig",
