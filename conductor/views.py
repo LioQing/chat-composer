@@ -378,12 +378,12 @@ class ConductorAccountApiKeyRefreshView(
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        models.ApiKey.objects.create_key(
+        key = models.ApiKey.objects.create_key(
             user=request.user,
             password=serializer.validated_data["password"],
         )
 
-        return views.Response()
+        return views.Response({"api_key": key})
 
 
 class ConductorAccountApiKeyRevealView(

@@ -224,6 +224,7 @@ class ConductorAccountApiKeyRefreshSerializer(serializers.Serializer):
     """Serializer for the ConductorAccountApiKeyRefreshView"""
 
     password = serializers.CharField(required=True)
+    api_key = serializers.CharField(read_only=True)
 
 
 class ConductorAccountApiKeyRevealSerializer(serializers.Serializer):
