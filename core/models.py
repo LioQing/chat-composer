@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import logging
 from typing import Dict, List
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import QuerySet
+from rest_framework_api_key.models import AbstractAPIKey
 
 from utils.json_type import JsonType
 
@@ -23,6 +25,29 @@ class User(AbstractUser):
     def get_containment_name(self) -> str:
         """Get the name of the containment"""
         return f"chat-composer-containment-{self.username}"
+
+
+class ApiKey(AbstractAPIKey):
+    """API key model"""
+
+    encrypted_key = models.TextField(default="THIS IS A TEMPORARY KEY")
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="api_key",
+    )
+
+    objects = managers.ApiKeyManager()
+
+    def clean(self):
+        """Clean the API key"""
+        logger = logging.getLogger(__name__)
+
+        if self.encrypted_key == "THIS IS A TEMPORARY KEY":
+            logger.warning(f"User {self.user.id} API key not set.")
+            return
+
+        super().clean()
 
 
 class Component(models.Model):
@@ -183,3 +208,6 @@ class Chat(models.Model):
     resp_message = models.TextField(blank=True)
     exit_code = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]

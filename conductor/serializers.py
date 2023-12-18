@@ -220,10 +220,25 @@ class ConductorAccountPasswordChangeSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True)
 
 
+class ConductorAccountApiKeyRefreshSerializer(serializers.Serializer):
+    """Serializer for the ConductorAccountApiKeyRefreshView"""
+
+    password = serializers.CharField(required=True)
+
+
+class ConductorAccountApiKeyRevealSerializer(serializers.Serializer):
+    """Serializer for the ConductorAccountApiKeyRevealView"""
+
+    password = serializers.CharField(required=True)
+    api_key = serializers.CharField(read_only=True)
+
+
 class ConductorChatSendSerializer(serializers.Serializer):
     """Serializer for the ConductorChatSendView"""
 
     user_message = serializers.CharField(required=True)
+    resp_message = serializers.CharField(read_only=True)
+    exit_code = serializers.IntegerField(read_only=True)
 
 
 class ConductorChatHistorySerializer(serializers.ModelSerializer):

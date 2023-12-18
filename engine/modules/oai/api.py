@@ -44,7 +44,7 @@ def chatcmpl(request: ChatcmplRequest) -> Chatcmpl:
     # response = requests.post(
     #     composer.url(f"conductor/chat/oai/chatcmpl/{composer.component_id()}/"),
     #     json={"request": request.model_dump()},
-    #     headers={"Authorization": f"Bearer {composer.access()}"},
+    #     headers=composer.headers(),
     # )
     # response.raise_for_status()
     # response = response.json()["response"]

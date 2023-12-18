@@ -365,13 +365,55 @@ class ConductorAccountPasswordChangeView(
         return views.Response()
 
 
+class ConductorAccountApiKeyRefreshView(
+    views.APIView,
+):
+    """View to create or refresh the API key"""
+
+    serializer_class = serializers.ConductorAccountApiKeyRefreshSerializer
+    permission_classes = [permissions.IsWhitelisted]
+
+    def post(self, request: views.Request, *args, **kwargs):
+        """Create or refresh the API key"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        models.ApiKey.objects.create_key(
+            user=request.user,
+            password=serializer.validated_data["password"],
+        )
+
+        return views.Response()
+
+
+class ConductorAccountApiKeyRevealView(
+    views.APIView,
+):
+    """View to reveal the API key"""
+
+    serializer_class = serializers.ConductorAccountApiKeyRevealSerializer
+    permission_classes = [permissions.IsWhitelisted]
+
+    def post(self, request: views.Request, *args, **kwargs):
+        """Reveal the API key"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        key = models.ApiKey.objects.get_key_from_user(
+            user=request.user,
+            password=serializer.validated_data["password"],
+        )
+
+        return views.Response({"api_key": key})
+
+
 class ConductorChatSendView(
     views.APIView,
 ):
     """View to run the chat of a pipeline"""
 
     serializer_class = serializers.ConductorChatSendSerializer
-    permission_classes = [permissions.IsWhitelisted]
+    permission_classes = [permissions.IsWhitelisted | permissions.HasApiKey]
 
     def post(self, request: views.Request, pk: int, *args, **kwargs):
         """Run the chat"""
@@ -388,7 +430,15 @@ class ConductorChatSendView(
         refresh: RefreshToken = RefreshToken.for_user(request.user)
         containment.run_pipeline(pipeline, user_message, refresh)
 
-        return views.Response(serializer.data)
+        # Get the newest response
+        chat: models.Chat = pipeline.chat_set.order_by("-created_at").first()
+        response = {
+            "user_message": chat.user_message,
+            "resp_message": chat.resp_message,
+            "exit_code": chat.exit_code,
+        }
+
+        return views.Response(response)
 
 
 @extend_schema_view(
@@ -408,13 +458,13 @@ class ConductorChatHistoryView(
     queryset = models.Chat.objects.all()
     serializer_class = serializers.ConductorChatHistorySerializer
     pagination_class = pagination.ChatPagination
-    permission_classes = [permissions.IsWhitelisted]
+    permission_classes = [permissions.IsWhitelisted | permissions.HasApiKey]
 
     def get_queryset(self):
         """Return the chat history of the pipeline"""
         q = Q()
         if not self.request.user.is_staff:
-            q &= Q(pipeline__user=self.request.user)
+            q &= Q(user=self.request.user)
         pipeline = models.Pipeline.objects.filter(q).get(id=self.kwargs["pk"])
         return self.queryset.filter(pipeline=pipeline).order_by("-created_at")
 
@@ -430,7 +480,7 @@ class ConductorChatSaveChatView(views.APIView):
     """View to save chat"""
 
     serializer_class = serializers.ConductorChatSaveChatSerializer
-    permission_classes = [permissions.IsWhitelisted]
+    permission_classes = [permissions.IsWhitelisted | permissions.HasApiKey]
 
     def patch(self, request: views.Request, pk: int, *args, **kwargs):
         """Save the chat"""
@@ -454,7 +504,7 @@ class ConductorChatStatesView(views.APIView):
     """View to get the chat states"""
 
     serializer_class = serializers.ConductorChatStatesSerializer
-    permission_classes = [permissions.IsWhitelisted]
+    permission_classes = [permissions.IsWhitelisted | permissions.HasApiKey]
 
     def get(self, request: views.Request, pk: int, *args, **kwargs):
         """Return the chat states"""
@@ -491,7 +541,7 @@ class ConductorChatOaiChatcmplView(views.APIView):
     """View to call the OpenAI chat completion"""
 
     serializer_class = serializers.ConductorChatOaiChatcmplSerializer
-    permission_classes = [permissions.IsWhitelisted]
+    permission_classes = [permissions.IsWhitelisted | permissions.HasApiKey]
 
     def post(self, request: views.Request, pk: int, *args, **kwargs):
         """Call the OpenAI chat completion"""

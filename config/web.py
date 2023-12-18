@@ -6,6 +6,7 @@ from . import BaseConfig
 class WebConfig(BaseConfig):
     """Web configuration"""
 
+    url: str = Field(default="http://localhost")
     port: int = Field(default=8000)
 
     class Config:

@@ -81,6 +81,16 @@ urlpatterns = [
         name="conductor-account-password-change",
     ),
     path(
+        "account/api-key/refresh/",
+        views.ConductorAccountApiKeyRefreshView.as_view(),
+        name="conductor-account-api-key-refresh",
+    ),
+    path(
+        "account/api-key/reveal/",
+        views.ConductorAccountApiKeyRevealView.as_view(),
+        name="conductor-account-api-key-reveal",
+    ),
+    path(
         "admin/whitelist/",
         views.ConductorAdminWhitelistView.as_view(),
         name="conductor-admin-whitelist",

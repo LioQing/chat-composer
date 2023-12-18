@@ -487,8 +487,8 @@ class Containment:
         )
 
         # Run pipeline
-        sanitized_user_message = user_message.replace("'", r"'\''")
-        self.container_exec_run(
+        sanitized_user_message = user_message.replace("'", "\\'")
+        output, exit_code = self.container_exec_run(
             container,
             f"python -m main '{sanitized_user_message}'",
             workdir=workdir,
@@ -496,8 +496,27 @@ class Containment:
             env={
                 "CHAT_COMPOSER_ACCESS_TOKEN": refresh.access_token,
                 "CHAT_COMPOSER_REFRESH_TOKEN": str(refresh),
+                "CHAT_COMPOSER_URL": web_config.url,
                 "CHAT_COMPOSER_PORT": web_config.port,
             },
+            raise_for_exit_code=False,
+            return_exit_code=True,
+        )
+
+        # Save output if exit code is not 0
+        if exit_code == 0:
+            return
+
+        models.Chat.objects.create(
+            pipeline=pipeline,
+            user_message=user_message,
+            resp_message=(
+                f"**FATAL ERROR**: Container exited with code {exit_code}\n"
+                "```\n"
+                f"{output}"
+                "```"
+            ),
+            exit_code=exit_code,
         )
 
 

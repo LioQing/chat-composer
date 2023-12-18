@@ -9,6 +9,12 @@ Chat composer project.
 erDiagram
     User {
         Boolean is_whitelisted
+        Text name
+    }
+
+    ApiKey {
+        Text encrypted_key
+        OneToOne(User) user FK
     }
 
     Component {
@@ -88,6 +94,7 @@ erDiagram
         PositiveInteger total_tokens
     }
 
+    User ||--o| ApiKey : generates
     User ||--o{ Pipeline : owns
     User ||--o{ Component : creates
     Component ||--o| ComponentInstance : refers

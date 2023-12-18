@@ -25,11 +25,25 @@ class States(BaseModel):
 def url(path: str) -> str:
     """Get the composer URL for the given path."""
     port = os.environ.get("CHAT_COMPOSER_PORT", 8000)
-    return f"http://host.docker.internal:{port}/{path}"
+    base_url = os.environ.get("CHAT_COMPOSER_URL", "http://localhost")
+    return f"{base_url}:{port}/{path}"
+
+
+def headers() -> Dict[str, str]:
+    """Get the composer headers."""
+    if api_key():
+        return {"Authorization": f"Api-Key {api_key()}"}
+
+    return {"Authorization": f"Bearer {access()}"}
+
+
+def api_key() -> Optional[str]:
+    """Get the composer API key."""
+    return os.environ.get("CHAT_COMPOSER_API_KEY")
 
 
 def access() -> str:
-    """Get the composer token."""
+    """Get the composer access token."""
     if os.environ.get("CHAT_COMPOSER_ACCESS_TOKEN"):
         return os.environ["CHAT_COMPOSER_ACCESS_TOKEN"]
 
@@ -39,7 +53,7 @@ def access() -> str:
 
 
 def refresh() -> str:
-    """Get the composer token."""
+    """Get the composer refresh token."""
     if os.environ.get("CHAT_COMPOSER_REFRESH_TOKEN"):
         return os.environ["CHAT_COMPOSER_REFRESH_TOKEN"]
 
@@ -108,7 +122,7 @@ class CurrentPipelineHelper:
 
         response = requests.get(
             url(f"conductor/chat/states/{self.pipeline_id}/"),
-            headers={"Authorization": f"Bearer {access()}"},
+            headers=headers(),
         )
         response.raise_for_status()
 
@@ -132,7 +146,7 @@ class CurrentPipelineHelper:
             if exc_type is None:
                 response = requests.post(
                     url(f"conductor/chat/states/{self.pipeline_id}/"),
-                    headers={"Authorization": f"Bearer {access()}"},
+                    headers=headers(),
                     json=_states.model_dump(),
                 )
                 response.raise_for_status()
@@ -141,7 +155,7 @@ class CurrentPipelineHelper:
             if exc_type is None:
                 response = requests.patch(
                     url(f"conductor/chat/save/chat/{self.pipeline_id}/"),
-                    headers={"Authorization": f"Bearer {access()}"},
+                    headers=headers(),
                     json={
                         "user_message": self.user_message,
                         "resp_message": str(self.response),
@@ -152,7 +166,7 @@ class CurrentPipelineHelper:
                 traceback_str = "".join(traceback.format_exception(exc_value))
                 response = requests.patch(
                     url(f"conductor/chat/save/chat/{self.pipeline_id}/"),
-                    headers={"Authorization": f"Bearer {access()}"},
+                    headers=headers(),
                     json={
                         "user_message": self.user_message,
                         "resp_message": (
