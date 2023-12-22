@@ -69,7 +69,21 @@ class ConductorPipelineNewView(
         self, serializer: serializers.ConductorPipelineNewSerializer
     ):
         """Create a new pipeline"""
-        serializer.save(user=self.request.user)
+        first_pipeline: models.Pipeline = models.Pipeline.objects.get(id=1)
+        init_args = {}
+        if first_pipeline.name == "Default":
+            init_args = {
+                "response": '"This is a response"',
+                "description": first_pipeline.description,
+            }
+
+        serializer.save(
+            user=self.request.user,
+            **init_args,
+        )
+
+        # Create container directory
+        containment.create_pipeline_directory(serializer.instance)
 
 
 class ConductorPipelineDeleteView(
@@ -85,6 +99,12 @@ class ConductorPipelineDeleteView(
     def get_queryset(self):
         """Return the pipelines owned by the user"""
         return self.queryset.filter(user=self.request.user)
+
+    def perform_destroy(self, instance: models.Pipeline):
+        """Set the pipeline as inactive"""
+        # Delete container directory
+        containment.delete_pipeline_directory(instance)
+        instance.delete()
 
 
 class ConductorPipelineRenameView(
@@ -460,6 +480,8 @@ class ConductorChatSendView(
         )
         serializer.is_valid(raise_exception=True)
         user_message: str = serializer.validated_data["user_message"]
+
+        raise exceptions.NotImplementedException()
 
         pipeline: models.Pipeline = models.Pipeline.objects.filter(
             user=request.user

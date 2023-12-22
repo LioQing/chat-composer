@@ -475,10 +475,11 @@ class Containment:
         # Create python environment
         result = self.container_exec_run(
             container,
-            "python --version",
+            "ls -a",
+            workdir=workdir,
         )
 
-        if "python 3.11" not in result.lower():
+        if ".venv" not in result.lower():
             self.container_exec_run(
                 container,
                 f"python3 -m venv {containment_config.python_venv}",
