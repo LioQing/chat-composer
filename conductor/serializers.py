@@ -190,6 +190,12 @@ class ConductorPipelineSaveSerializer(serializers.Serializer):
     )
 
 
+class ConductorPipelineDownloadSerializer(serializers.Serializer):
+    """Serializer for the ConductorPipelineDownloadView"""
+
+    pass
+
+
 class ConductorAccountSerializer(serializers.ModelSerializer):
     """Serializer for the ConductorAccountView"""
 

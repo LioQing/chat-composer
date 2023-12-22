@@ -1,6 +1,7 @@
 import logging
 
 from django.db.models import Q
+from django.http import HttpResponse
 from drf_spectacular.utils import (
     OpenApiParameter,
     extend_schema,
@@ -14,7 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 import engine.modules.oai
 from core import models
-from engine.containment import containment
+from engine.containment import ContainmentArchiveType, containment
 from rest_auth import permissions
 
 from . import exceptions, pagination, serializers
@@ -322,6 +323,43 @@ class ConductorPipelineSaveView(views.APIView):
             component_instance.component.save()
 
         return views.Response(serializer.data)
+
+
+class ConductorPipelineDownloadView(views.APIView):
+    """View to download pipeline"""
+
+    serializer_class = serializers.ConductorPipelineDownloadSerializer
+    permission_classes = [permissions.IsWhitelisted]
+
+    def get(
+        self,
+        request: views.Request,
+        pk: int,
+        archive_type: ContainmentArchiveType,
+        *args,
+        **kwargs,
+    ):
+        """Download the pipeline"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        pipeline = models.Pipeline.objects.filter(user=request.user).get(id=pk)
+
+        # Create the archive
+        archive = containment.archive(
+            pipeline, archive_type, f"pipeline_{pipeline.id}"
+        )
+
+        return HttpResponse(
+            archive,
+            headers={
+                "Content-Type": archive_type.mime_type,
+                "Content-Disposition": (
+                    "attachment;"
+                    f' filename="pipeline_{pipeline.id}.{archive_type}"'
+                ),
+            },
+        )
 
 
 class ConductorAccountView(

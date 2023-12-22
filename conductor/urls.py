@@ -1,7 +1,34 @@
-from django.urls import path
+from django.urls import path, register_converter
 from rest_framework import routers
 
+from engine.containment import ContainmentArchiveType
+
 from . import views
+
+
+class ArchiveTypeConverter:
+    """Archive type converter class"""
+
+    regex = r"(zip|targz)"
+
+    def to_python(self, value: str) -> ContainmentArchiveType:
+        """Convert to python"""
+        if value == "zip":
+            return ContainmentArchiveType.ZIP
+        elif value == "targz":
+            return ContainmentArchiveType.TARGZ
+        else:
+            raise ValueError("Invalid archive type")
+
+    def to_url(self, value: ContainmentArchiveType) -> str:
+        """Convert to url"""
+        if value == ContainmentArchiveType.ZIP:
+            return "zip"
+        elif value == ContainmentArchiveType.TARGZ:
+            return "targz"
+
+
+register_converter(ArchiveTypeConverter, "archive")
 
 router = routers.SimpleRouter()
 router.register(r"pipelines", views.ConductorPipelinesView)
@@ -49,6 +76,11 @@ urlpatterns = [
         "pipeline/save/<int:pk>/",
         views.ConductorPipelineSaveView.as_view(),
         name="conductor-pipeline-save",
+    ),
+    path(
+        "pipeline/download/<int:pk>/<archive:archive_type>/",
+        views.ConductorPipelineDownloadView.as_view(),
+        name="conductor-pipeline-download",
     ),
     path(
         "chat/send/<int:pk>/",

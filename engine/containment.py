@@ -1,6 +1,7 @@
 import logging
 import os
 import tarfile
+import zipfile
 from enum import Enum, StrEnum
 from pathlib import Path
 from typing import Dict, Optional, Tuple
@@ -13,6 +14,21 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from config.containment import containment_config
 from config.web import web_config
 from core import models
+
+
+class ContainmentArchiveType(StrEnum):
+    """The archive type."""
+
+    TARGZ = "tar.gz"
+    ZIP = "zip"
+
+    @property
+    def mime_type(self) -> str:
+        """Get the mime type for the archive type."""
+        if self == ContainmentArchiveType.TARGZ:
+            return "application/gzip"
+        elif self == ContainmentArchiveType.ZIP:
+            return "application/zip"
 
 
 class ContainmentFileSpecializer:
@@ -91,11 +107,12 @@ class ContainmentFileSpecializer:
 
         rmdir(dir_tmp)
 
-        # Remove tar
-        tar_path = dir / f"{self.tmp_dir_name}.tar.gz"
+        # Remove archive
+        for archive_type in ContainmentArchiveType:
+            archive_path = dir / f"{self.tmp_dir_name}.{archive_type}"
 
-        if tar_path.exists():
-            tar_path.unlink()
+            if archive_path.exists():
+                archive_path.unlink()
 
     def specialize(self, path: Path):
         """Specialize the given file or directory.
@@ -261,22 +278,57 @@ class ContainmentFileSpecializer:
             with open(component_path, "w") as file:
                 file.write(component.code)
 
-    def to_tar(self) -> bytes:
-        """Convert the temporary directory to a tar file."""
+    def to_archive(
+        self,
+        archive_type: ContainmentArchiveType = ContainmentArchiveType.TARGZ,
+        subroot: Optional[str] = None,
+    ) -> bytes:
+        """Convert the temporary directory to a tar file.
+
+        Args:
+            archive_type (ContainmentArchiveType, optional): The archive type.
+                Defaults to ContainmentArchiveType.TARGZ.
+            subroot (Optional[str], optional): The subroot to use. Defaults to
+                None.
+        """
         dir = Path(__file__).resolve().parent
         dir_tmp = dir / self.tmp_dir_name
 
         if not dir_tmp.exists():
             raise RuntimeError("Temporary directory does not exist")
 
-        tar_path = dir / f"{self.tmp_dir_name}.tar.gz"
+        archive_path = dir / f"{self.tmp_dir_name}.{archive_type}"
 
-        with tarfile.open(tar_path, "w:gz") as tar:
-            for file in os.listdir(dir_tmp):
-                tar.add(dir_tmp / file, arcname=file)
+        if archive_type == ContainmentArchiveType.TARGZ:
+            with tarfile.open(archive_path, "w:gz") as archive:
+                if subroot is not None:
+                    archive.add(dir_tmp, arcname=subroot)
+                else:
+                    for file in dir_tmp.iterdir():
+                        archive.add(file, arcname=file.name)
+        elif archive_type == ContainmentArchiveType.ZIP:
+            with zipfile.ZipFile(archive_path, "w") as archive:
 
-        with open(tar_path, "rb") as tar:
-            return tar.read()
+                def add_dir(path: Path, arcname: Path | str):
+                    """Add the given directory to the archive."""
+                    arcname: Path = Path(arcname)
+                    for file in path.iterdir():
+                        if file.is_dir():
+                            add_dir(file, arcname / file.name)
+                        else:
+                            archive.write(file, arcname=arcname / file.name)
+
+                if subroot is not None:
+                    add_dir(dir_tmp, arcname=subroot)
+                else:
+                    for file in dir_tmp.iterdir():
+                        if file.is_dir():
+                            add_dir(file, arcname=file.name)
+                        else:
+                            archive.write(file, arcname=file.name)
+
+        with open(archive_path, "rb") as archive:
+            return archive.read()
 
 
 class Containment:
@@ -450,6 +502,16 @@ class Containment:
             f"{pipeline.get_containment_directory()}",
         )
 
+    def archive(
+        self,
+        piepline: models.Pipeline,
+        archive_type: str,
+        subroot: str,
+    ) -> bytes:
+        """Archive the given pipeline"""
+        with ContainmentFileSpecializer(piepline) as specializer:
+            return specializer.to_archive(archive_type, subroot)
+
     def run_pipeline(
         self,
         pipeline: models.Pipeline,
@@ -475,7 +537,7 @@ class Containment:
             )
 
             # Put archive in container
-            if not container.put_archive(workdir, specializer.to_tar()):
+            if not container.put_archive(workdir, specializer.to_archive()):
                 raise RuntimeError("Unable to copy files to container")
 
         # Install dependencies

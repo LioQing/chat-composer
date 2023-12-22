@@ -15,14 +15,16 @@
 
 ## Functions
 
-- [`access`](./__init__.md#function-access): Get the composer token.
+- [`access`](./__init__.md#function-access): Get the composer access token.
+- [`api_key`](./__init__.md#function-api_key): Get the composer API key.
 - [`component_id`](./__init__.md#function-component_id): Get the current component ID.
 - [`component_state`](./__init__.md#function-component_state): Get the state of the component with the given ID.
+- [`headers`](./__init__.md#function-headers): Get the composer headers.
 - [`init_component`](./__init__.md#function-init_component): Set the current component
 - [`init_pipeline`](./__init__.md#function-init_pipeline): Set the current pipeline
 - [`pipeline_id`](./__init__.md#function-pipeline_id): Get the current pipeline ID.
 - [`pipeline_state`](./__init__.md#function-pipeline_state): Get the state of the pipeline.
-- [`refresh`](./__init__.md#function-refresh): Get the composer token.
+- [`refresh`](./__init__.md#function-refresh): Get the composer refresh token.
 - [`url`](./__init__.md#function-url): Get the composer URL for the given path.
 
 

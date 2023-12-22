@@ -21,7 +21,33 @@ Get the composer URL for the given path.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L31"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L32"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+## <kbd>function</kbd> `headers`
+
+```python
+headers() → Dict[str, str]
+```
+
+Get the composer headers.
+
+
+---
+
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L40"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+## <kbd>function</kbd> `api_key`
+
+```python
+api_key() → Optional[str]
+```
+
+Get the composer API key.
+
+
+---
+
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L45"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `access`
 
@@ -29,12 +55,12 @@ Get the composer URL for the given path.
 access() → str
 ```
 
-Get the composer token.
+Get the composer access token.
 
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L41"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L55"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `refresh`
 
@@ -42,12 +68,12 @@ Get the composer token.
 refresh() → str
 ```
 
-Get the composer token.
+Get the composer refresh token.
 
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L51"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L65"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `component_id`
 
@@ -60,7 +86,7 @@ Get the current component ID.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L59"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L73"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `pipeline_id`
 
@@ -73,7 +99,7 @@ Get the current pipeline ID.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L67"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L81"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `component_state`
 
@@ -86,7 +112,7 @@ Get the state of the component with the given ID.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L82"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L96"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `pipeline_state`
 
@@ -99,7 +125,7 @@ Get the state of the pipeline.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L199"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L213"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `init_pipeline`
 
@@ -112,7 +138,7 @@ Set the current pipeline
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L206"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L220"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `init_component`
 
@@ -213,12 +239,12 @@ Returns the set of fields that have been set on this model instance.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L95"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L109"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `CurrentPipelineHelper`
 Helper class for setting current pipeline.
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L98"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L112"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `CurrentPipelineHelper.__init__`
 
@@ -233,7 +259,7 @@ Initialize the helper
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L176"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L190"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `CurrentPipelineHelper.set_response`
 
@@ -246,12 +272,12 @@ Set the response
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L181"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L195"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `CurrentComponentHelper`
 Helper class for setting current component.
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L184"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/composer/__init__.py#L198"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `CurrentComponentHelper.__init__`
 

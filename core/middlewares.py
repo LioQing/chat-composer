@@ -40,6 +40,7 @@ class RequestLogMiddleware:
 
             log_data = log_data | {
                 "response_status": response.status_code,
+                "response_headers": response.headers,
                 "response_body": response_body,
             }
 
