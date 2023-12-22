@@ -481,8 +481,6 @@ class ConductorChatSendView(
         serializer.is_valid(raise_exception=True)
         user_message: str = serializer.validated_data["user_message"]
 
-        raise exceptions.NotImplementedException()
-
         pipeline: models.Pipeline = models.Pipeline.objects.filter(
             user=request.user
         ).get(id=pk)
