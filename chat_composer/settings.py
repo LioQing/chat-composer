@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "rest_framework_api_key",
+    "django_grpc_framework",
     "core.apps.CoreConfig",
     "conductor.apps.ConductorConfig",
     "oai.apps.OaiConfig",

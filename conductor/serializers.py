@@ -297,6 +297,13 @@ class ConductorChatOaiChatcmplSerializer(serializers.Serializer):
     response = serializers.JSONField(read_only=True)
 
 
+class ConductorChatVaiGeminiProSerializer(serializers.Serializer):
+    """Serializer for the ConductorChatVaiGeminiProView"""
+
+    request = serializers.JSONField(required=True)
+    response = serializers.JSONField(read_only=True)
+
+
 class ConductorAdminWhitelistSerializer(serializers.Serializer):
     """Serializer for the ConductorAdminWhitelistView"""
 

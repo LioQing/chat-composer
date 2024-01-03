@@ -1,3 +1,3 @@
 """Modules"""
 
-from . import composer, oai  # noqa: F401
+from . import composer, oai, vai  # noqa: F401

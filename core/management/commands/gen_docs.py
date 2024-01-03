@@ -5,15 +5,18 @@ from django.core.management.base import BaseCommand
 from lazydocs import MarkdownGenerator
 from lazydocs.generation import to_md_file
 
-from engine.modules import composer, oai
+from engine.modules import composer, oai, vai
 
 SRC_BASE_URL = "https://github.com/LioQing/chat-composer/blob/main/engine/"
 OUT_PATH = "./docs"
-MODULES = [oai, composer]
+MODULES = [oai, vai, composer]
 INCLUDES = [
     "engine.modules.oai.api",
     "engine.modules.oai.enums",
     "engine.modules.oai.models",
+    "engine.modules.vai.api",
+    "engine.modules.vai.enums",
+    "engine.modules.vai.models",
     "engine.modules.composer",
 ]
 

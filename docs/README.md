@@ -39,3 +39,4 @@ However, you can create the model by unpacking them into the constructor.
 
 - [`composer`](./composer/README.md): Composer module.
 - [`oai`](./oai/README.md): OpenAI module.
+- [`vai`](./vai/README.md): Google Vertex AI module.

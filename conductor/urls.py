@@ -103,6 +103,11 @@ urlpatterns = [
         name="conductor-chat-oai-chatcmpl",
     ),
     path(
+        "chat/vai/gemini-pro/<int:pk>/",
+        views.ConductorChatVaiGeminiProView.as_view(),
+        name="conductor-chat-vai-gemini-pro",
+    ),
+    path(
         "account/",
         views.ConductorAccountView.as_view(),
         name="conductor-account",

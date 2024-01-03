@@ -98,6 +98,33 @@ COMPONENT_TEMPLATES = [
         "state": {},
         "is_template": True,
     },
+    {
+        "function_name": "google_gemini_pro",
+        "name": "Google Gemini Pro",
+        "arguments": {
+            "user_message": {
+                "default": "",
+                "enabled": True,
+                "interpolated": "user_message",
+            }
+        },
+        "return_type": "string",
+        "description": (
+            "# Google Gemini Pro\n\nThis is a simple example of the VAI"
+            " module.\n\nIt calls Google's Gemini API for answering user's"
+            " question.\n\nVAI stands for Vertex AI, which is one of Google"
+            ' Cloud\'s services.\n\n## More\n\nClick the "DOCS" button on the'
+            " top right to see more."
+        ),
+        "code": (
+            "from modules import vai\n\ndef google_gemini_pro(user_message:"
+            " str) -> str:\n    response ="
+            " vai.api.gemini_pro(vai.models.GeminiRequest(\n       "
+            " contents=user_message\n    ))\n\n    return response.text"
+        ),
+        "state": {},
+        "is_template": True,
+    },
 ]
 
 

@@ -7,6 +7,7 @@ from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
 )
+from google.protobuf import json_format as google_json
 from pydantic import ValidationError
 from rest_framework import generics
 from rest_framework import permissions as rest_permissions
@@ -14,6 +15,7 @@ from rest_framework import views, viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
 
 import engine.modules.oai
+import engine.modules.vai
 from core import models
 from engine.containment import ContainmentArchiveType, containment
 from rest_auth import permissions
@@ -626,6 +628,43 @@ class ConductorChatOaiChatcmplView(views.APIView):
             raise ValueError("response is None")
 
         serializer.validated_data["response"] = response.model_dump()
+        return views.Response(serializer.data)
+
+
+class ConductorChatVaiGeminiProView(views.APIView):
+    """View to call the Gemini Pro chat"""
+
+    serializer_class = serializers.ConductorChatVaiGeminiProSerializer
+    permission_classes = [permissions.IsWhitelisted | permissions.HasApiKey]
+
+    def post(self, request: views.Request, pk: int, *args, **kwargs):
+        """Call the OpenAI chat completion"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        component = models.Component.objects.filter(user=request.user).get(
+            id=pk
+        )
+
+        response = None
+        with engine.modules.composer.init_component(component.id):
+            try:
+                request_args = serializer.validated_data["request"]
+                gemini_pro_request = engine.modules.vai.models.GeminiRequest(
+                    **request_args
+                )
+            except ValidationError as e:
+                raise exceptions.BadArgumentsException(str(e))
+
+            response = engine.modules.vai.api.gemini_pro(gemini_pro_request)
+
+        if response is None:
+            raise ValueError("response is None")
+
+        serializer.validated_data["response"] = google_json.MessageToDict(
+            response._result._pb,
+            preserving_proto_field_name=True
+        )
         return views.Response(serializer.data)
 
 
