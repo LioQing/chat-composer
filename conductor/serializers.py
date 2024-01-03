@@ -3,25 +3,24 @@ from rest_framework import serializers
 from core import models
 
 
-class ConductorPipelineSerializer(serializers.ModelSerializer):
-    """Serializer for the PipelineView"""
+class ConductorPipelinesSerializer(serializers.ModelSerializer):
+    """Serializer for the PipelinesView"""
 
     class Meta:
         model = models.Pipeline
         fields = (
             "id",
             "name",
-            "is_safe",
             "created_at",
         )
 
 
-class ConductorPipelineStateSerializer(serializers.ModelSerializer):
-    """Serializer for the PipelineStateView"""
+class ConductorPipelineAttributesSerializer(serializers.ModelSerializer):
+    """Serializer for the PipelineAttributesView"""
 
     class Meta:
         model = models.Pipeline
-        fields = ("state",)
+        fields = ("response", "state", "description")
 
 
 class ConductorPipelineNewSerializer(serializers.ModelSerializer):
@@ -32,10 +31,9 @@ class ConductorPipelineNewSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
-            "is_safe",
             "created_at",
         )
-        read_only_fields = ("id", "name", "is_safe", "created_at")
+        read_only_fields = ("id", "name", "created_at")
 
 
 class ConductorPipelineDeleteSerializer(serializers.ModelSerializer):
@@ -63,8 +61,10 @@ class ConductorComponentSerializer(serializers.ModelSerializer):
         model = models.Component
         fields = (
             "id",
-            "name",
             "function_name",
+            "name",
+            "arguments",
+            "return_type",
             "description",
             "code",
             "state",
@@ -81,12 +81,18 @@ class ConductorPipelineComponentInstanceSerializer(
     component_id = serializers.IntegerField(
         source="component.id", read_only=True
     )
-    name = serializers.CharField(source="component.name", read_only=True)
     function_name = serializers.CharField(
         source="component.function_name", read_only=True
     )
-    description = serializers.JSONField(
-        source="component.description", read_only=True
+    name = serializers.CharField(source="component.name", read_only=True)
+    arguments = serializers.JSONField(
+        source="component.arguments", read_only=True
+    )
+    return_type = serializers.CharField(
+        source="component.return_type", read_only=True
+    )
+    description = serializers.CharField(
+        source="component.description", read_only=True, allow_blank=True
     )
     code = serializers.CharField(source="component.code", read_only=True)
     state = serializers.JSONField(source="component.state", read_only=True)
@@ -106,6 +112,8 @@ class ConductorPipelineComponentInstanceSerializer(
             "component_id",
             "name",
             "function_name",
+            "arguments",
+            "return_type",
             "description",
             "code",
             "state",
@@ -161,21 +169,31 @@ class ConductorPipelineSaveComponentInstanceSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=True)
     order = serializers.IntegerField(required=True)
     is_enabled = serializers.BooleanField(required=True)
-    name = serializers.CharField(required=True)
-    function_name = serializers.CharField(required=True)
-    description = serializers.JSONField(required=True)
-    code = serializers.CharField(required=True)
+    function_name = serializers.CharField(required=True, allow_blank=True)
+    name = serializers.CharField(required=True, allow_blank=True)
+    arguments = serializers.JSONField(required=True)
+    return_type = serializers.CharField(required=True)
+    description = serializers.CharField(required=True, allow_blank=True)
+    code = serializers.CharField(required=True, allow_blank=True)
     state = serializers.JSONField(required=True)
 
 
 class ConductorPipelineSaveSerializer(serializers.Serializer):
     """Serializer for the ConductorPipelineSaveView"""
 
-    name = serializers.CharField(required=True)
+    name = serializers.CharField(required=True, allow_blank=True)
+    response = serializers.CharField(required=True, allow_blank=True)
     state = serializers.JSONField(required=True)
+    description = serializers.CharField(required=True, allow_blank=True)
     components = ConductorPipelineSaveComponentInstanceSerializer(
         many=True, required=True
     )
+
+
+class ConductorPipelineDownloadSerializer(serializers.Serializer):
+    """Serializer for the ConductorPipelineDownloadView"""
+
+    pass
 
 
 class ConductorAccountSerializer(serializers.ModelSerializer):
@@ -208,11 +226,26 @@ class ConductorAccountPasswordChangeSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True)
 
 
+class ConductorAccountApiKeyRefreshSerializer(serializers.Serializer):
+    """Serializer for the ConductorAccountApiKeyRefreshView"""
+
+    password = serializers.CharField(required=True)
+    api_key = serializers.CharField(read_only=True)
+
+
+class ConductorAccountApiKeyRevealSerializer(serializers.Serializer):
+    """Serializer for the ConductorAccountApiKeyRevealView"""
+
+    password = serializers.CharField(required=True)
+    api_key = serializers.CharField(read_only=True)
+
+
 class ConductorChatSendSerializer(serializers.Serializer):
     """Serializer for the ConductorChatSendView"""
 
     user_message = serializers.CharField(required=True)
-    api_message = serializers.CharField(read_only=True)
+    resp_message = serializers.CharField(read_only=True)
+    exit_code = serializers.IntegerField(read_only=True)
 
 
 class ConductorChatHistorySerializer(serializers.ModelSerializer):
@@ -223,38 +256,9 @@ class ConductorChatHistorySerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "user_message",
-            "api_message",
+            "resp_message",
+            "exit_code",
             "created_at",
-        )
-
-
-class ConductorChatComponentSerializer(serializers.ModelSerializer):
-    """Serializer for the ConductorChatPipelineView"""
-
-    class Meta:
-        model = models.Component
-        fields = (
-            "id",
-            "name",
-            "code",
-            "function_name",
-            "state",
-        )
-
-
-class ConductorChatPipelineSerializer(serializers.ModelSerializer):
-    """Serializer for the ConductorChatPipelineView"""
-
-    components = ConductorChatComponentSerializer(
-        many=True, source="get_components"
-    )
-
-    class Meta:
-        model = models.Pipeline
-        fields = (
-            "id",
-            "state",
-            "components",
         )
 
 
@@ -262,18 +266,39 @@ class ConductorChatSaveChatSerializer(serializers.Serializer):
     """Serializer for the ConductorChatSaveChatView"""
 
     user_message = serializers.CharField(required=True)
-    api_message = serializers.CharField(required=True)
+    resp_message = serializers.CharField(required=True)
+    exit_code = serializers.IntegerField(required=True)
 
 
-class ConductorChatSaveStatesSerializer(serializers.Serializer):
-    """Serializer for the ConductorChatSaveStatesView"""
+class ConductorChatComponentStateSerializer(serializers.ModelSerializer):
+    """Serializer for the ConductorChatStatesView"""
 
-    state = serializers.JSONField(required=True)
-    pstate = serializers.JSONField(required=True)
+    class Meta:
+        model = models.Component
+        fields = (
+            "id",
+            "state",
+        )
+
+
+class ConductorChatStatesSerializer(serializers.Serializer):
+    """Serializer for the ConductorChatStatesView"""
+
+    component_states = ConductorChatComponentStateSerializer(
+        many=True, required=True
+    )
+    pipeline_state = serializers.JSONField(required=True)
 
 
 class ConductorChatOaiChatcmplSerializer(serializers.Serializer):
     """Serializer for the ConductorChatOaiChatcmplView"""
+
+    request = serializers.JSONField(required=True)
+    response = serializers.JSONField(read_only=True)
+
+
+class ConductorChatVaiGeminiProSerializer(serializers.Serializer):
+    """Serializer for the ConductorChatVaiGeminiProView"""
 
     request = serializers.JSONField(required=True)
     response = serializers.JSONField(read_only=True)
@@ -307,11 +332,3 @@ class ConductorAdminMakeTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Component
         fields = ("is_template",)
-
-
-class ConductorAdminMakeSafeSerializer(serializers.ModelSerializer):
-    """Serializer for the ConductorAdminMakeSafeView"""
-
-    class Meta:
-        model = models.Pipeline
-        fields = ("is_safe",)

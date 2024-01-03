@@ -1,34 +1,36 @@
 import logging
 
 from django.db.models import Q
+from django.http import HttpResponse
 from drf_spectacular.utils import (
     OpenApiParameter,
     extend_schema,
     extend_schema_view,
 )
+from google.protobuf import json_format as google_json
 from pydantic import ValidationError
 from rest_framework import generics
 from rest_framework import permissions as rest_permissions
 from rest_framework import views, viewsets
+from rest_framework_simplejwt.tokens import RefreshToken
 
-import engine.oai.api
-import engine.pipeline
-import engine.restricted.oai
-from config.logger import logger_config
+import engine.modules.oai
+import engine.modules.vai
 from core import models
+from engine.containment import ContainmentArchiveType, containment
 from rest_auth import permissions
 
 from . import exceptions, pagination, serializers
 
 
-class ConductorPipelineView(
+class ConductorPipelinesView(
     generics.ListAPIView,
     viewsets.GenericViewSet,
 ):
     """Viewset for the pipeline list"""
 
     queryset = models.Pipeline.objects.all()
-    serializer_class = serializers.ConductorPipelineSerializer
+    serializer_class = serializers.ConductorPipelinesSerializer
     permission_classes = [permissions.IsWhitelisted]
 
     def get_queryset(self):
@@ -38,14 +40,14 @@ class ConductorPipelineView(
         return self.queryset.filter(user=self.request.user)
 
 
-class ConductorPipelineStateView(
+class ConductorPipelineAttributesView(
     generics.RetrieveAPIView,
     viewsets.GenericViewSet,
 ):
-    """Viewset for retrieving a pipeline's state"""
+    """Viewset for retrieving a pipeline's attributes"""
 
     queryset = models.Pipeline.objects.all()
-    serializer_class = serializers.ConductorPipelineStateSerializer
+    serializer_class = serializers.ConductorPipelineAttributesSerializer
     permission_classes = [permissions.IsWhitelisted]
 
     def get_queryset(self):
@@ -69,7 +71,21 @@ class ConductorPipelineNewView(
         self, serializer: serializers.ConductorPipelineNewSerializer
     ):
         """Create a new pipeline"""
-        serializer.save(user=self.request.user)
+        first_pipeline: models.Pipeline = models.Pipeline.objects.get(id=1)
+        init_args = {}
+        if first_pipeline.name == "Default":
+            init_args = {
+                "response": '"This is a response"',
+                "description": first_pipeline.description,
+            }
+
+        serializer.save(
+            user=self.request.user,
+            **init_args,
+        )
+
+        # Create container directory
+        containment.create_pipeline_directory(serializer.instance)
 
 
 class ConductorPipelineDeleteView(
@@ -82,14 +98,15 @@ class ConductorPipelineDeleteView(
     serializer_class = serializers.ConductorPipelineDeleteSerializer
     permission_classes = [permissions.IsWhitelisted]
 
-    def perform_destroy(self, instance: models.Pipeline):
-        """Set the pipeline as inactive"""
-        instance.is_active = False
-        instance.save()
-
     def get_queryset(self):
         """Return the pipelines owned by the user"""
         return self.queryset.filter(user=self.request.user)
+
+    def perform_destroy(self, instance: models.Pipeline):
+        """Set the pipeline as inactive"""
+        # Delete container directory
+        containment.delete_pipeline_directory(instance)
+        instance.delete()
 
 
 class ConductorPipelineRenameView(
@@ -185,8 +202,10 @@ class ConductorPipelineComponentInstanceNewView(
             )
             component = models.Component.objects.create(
                 user=self.request.user,
-                name=template_component.name,
                 function_name=template_component.function_name,
+                name=template_component.name,
+                arguments=template_component.arguments,
+                return_type=template_component.return_type,
                 description=template_component.description,
                 code=template_component.code,
                 state=template_component.state,
@@ -209,8 +228,10 @@ class ConductorPipelineComponentInstanceNewView(
         # Fill serializer with component instance data
         serializer.instance = component_instance
         serializer.validated_data["component_id"] = component.id
-        serializer.validated_data["name"] = component.name
         serializer.validated_data["function_name"] = component.function_name
+        serializer.validated_data["name"] = component.name
+        serializer.validated_data["arguments"] = component.arguments
+        serializer.validated_data["return_type"] = component.return_type
         serializer.validated_data["description"] = component.description
         serializer.validated_data["code"] = component.code
         serializer.validated_data["state"] = component.state
@@ -234,9 +255,6 @@ class ConductorPipelineComponentInstanceDeleteView(
 
     def perform_destroy(self, instance: models.ComponentInstance):
         """Set the component instance as inactive"""
-        instance.is_active = False
-        instance.save()
-
         # Reorder the component instances
         for (
             component_instance
@@ -244,6 +262,9 @@ class ConductorPipelineComponentInstanceDeleteView(
             if component_instance.order > instance.order:
                 component_instance.order -= 1
                 component_instance.save()
+
+        # Delete the component instance
+        instance.delete()
 
     def get_queryset(self):
         """Return the component instances owned by the user"""
@@ -296,13 +317,14 @@ class ConductorPipelineSaveView(views.APIView):
 
         pipeline = models.Pipeline.objects.filter(user=request.user).get(id=pk)
 
-        # Save the pipeline name
+        # Save the pipeline attributes
         pipeline.name = serializer.validated_data["name"]
+        pipeline.response = serializer.validated_data["response"]
         pipeline.state = serializer.validated_data["state"]
+        pipeline.description = serializer.validated_data["description"]
         pipeline.save()
 
         # For each component, save them
-        code_changed = False
         for component in serializer.validated_data["components"]:
             component_instance = models.ComponentInstance.objects.get(
                 id=component["id"]
@@ -311,25 +333,55 @@ class ConductorPipelineSaveView(views.APIView):
             component_instance.is_enabled = component["is_enabled"]
             component_instance.save()
 
-            # If the code has changed, make unsafe
-            if component_instance.component.code != component["code"]:
-                code_changed = True
-
-            component_instance.component.name = component["name"]
             component_instance.component.function_name = component[
                 "function_name"
             ]
+            component_instance.component.name = component["name"]
+            component_instance.component.arguments = component["arguments"]
+            component_instance.component.return_type = component["return_type"]
             component_instance.component.description = component["description"]
             component_instance.component.code = component["code"]
             component_instance.component.state = component["state"]
             component_instance.component.save()
 
-        # If the code has changed, make unsafe
-        if code_changed:
-            pipeline.is_safe = False
-            pipeline.save()
-
         return views.Response(serializer.data)
+
+
+class ConductorPipelineDownloadView(views.APIView):
+    """View to download pipeline"""
+
+    serializer_class = serializers.ConductorPipelineDownloadSerializer
+    permission_classes = [permissions.IsWhitelisted]
+
+    def get(
+        self,
+        request: views.Request,
+        pk: int,
+        archive_type: ContainmentArchiveType,
+        *args,
+        **kwargs,
+    ):
+        """Download the pipeline"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        pipeline = models.Pipeline.objects.filter(user=request.user).get(id=pk)
+
+        # Create the archive
+        archive = containment.archive(
+            pipeline, archive_type, f"pipeline_{pipeline.id}"
+        )
+
+        return HttpResponse(
+            archive,
+            headers={
+                "Content-Type": archive_type.mime_type,
+                "Content-Disposition": (
+                    "attachment;"
+                    f' filename="pipeline_{pipeline.id}.{archive_type}"'
+                ),
+            },
+        )
 
 
 class ConductorAccountView(
@@ -373,60 +425,80 @@ class ConductorAccountPasswordChangeView(
         return views.Response()
 
 
+class ConductorAccountApiKeyRefreshView(
+    views.APIView,
+):
+    """View to create or refresh the API key"""
+
+    serializer_class = serializers.ConductorAccountApiKeyRefreshSerializer
+    permission_classes = [permissions.IsWhitelisted]
+
+    def post(self, request: views.Request, *args, **kwargs):
+        """Create or refresh the API key"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        key = models.ApiKey.objects.create_key(
+            user=request.user,
+            password=serializer.validated_data["password"],
+        )
+
+        return views.Response({"api_key": key})
+
+
+class ConductorAccountApiKeyRevealView(
+    views.APIView,
+):
+    """View to reveal the API key"""
+
+    serializer_class = serializers.ConductorAccountApiKeyRevealSerializer
+    permission_classes = [permissions.IsWhitelisted]
+
+    def post(self, request: views.Request, *args, **kwargs):
+        """Reveal the API key"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        key = models.ApiKey.objects.get_key_from_user(
+            user=request.user,
+            password=serializer.validated_data["password"],
+        )
+
+        return views.Response({"api_key": key})
+
+
 class ConductorChatSendView(
     views.APIView,
 ):
     """View to run the chat of a pipeline"""
 
     serializer_class = serializers.ConductorChatSendSerializer
-    permission_classes = [permissions.IsWhitelisted]
+    permission_classes = [permissions.IsWhitelisted | permissions.HasApiKey]
 
     def post(self, request: views.Request, pk: int, *args, **kwargs):
         """Run the chat"""
-        logger = logging.getLogger(__name__)
-        logger.setLevel(logger_config.level)
+        serializer: serializers.ConductorChatSendSerializer = (
+            self.serializer_class(data=request.data)
+        )
+        serializer.is_valid(raise_exception=True)
+        user_message: str = serializer.validated_data["user_message"]
 
-        try:
-            serializer: serializers.ConductorChatSendSerializer = (
-                self.serializer_class(data=request.data)
-            )
-            serializer.is_valid(raise_exception=True)
-            user_message: str = serializer.validated_data["user_message"]
+        pipeline: models.Pipeline = models.Pipeline.objects.filter(
+            user=request.user
+        ).get(id=pk)
 
-            pipeline: models.Pipeline = models.Pipeline.objects.filter(
-                user=request.user
-            ).get(id=pk)
-            try:
-                pipeline_data = engine.pipeline.run(pipeline, user_message)
-            except Exception:
-                import traceback
+        refresh: RefreshToken = RefreshToken.for_user(request.user)
+        containment.run_pipeline(pipeline, user_message, refresh)
 
-                pipeline_data = {
-                    "api_message": traceback.format_exc(),
-                }
+        # Get the newest response
+        chat: models.Chat = pipeline.chat_set.order_by("-created_at").first()
+        response = {
+            "user_message": chat.user_message,
+            "resp_message": chat.resp_message,
+            "exit_code": chat.exit_code,
+        }
 
-            serializer.validated_data["api_message"] = str(
-                pipeline_data.get("api_message", "")
-            )
-            serializer.is_valid(raise_exception=True)
-
-            # Save to chat
-            models.Chat.objects.create(
-                pipeline=pipeline,
-                user_message=user_message,
-                api_message=pipeline_data.get(
-                    "api_message", "<no api message>"
-                ),
-            )
-
-            logger.debug(f"serializer: {serializer}")
-            return views.Response(serializer.data)
-        except Exception as e:
-            import traceback
-
-            traceback.print_exc()
-            logger.error(e)
-            raise e
+        return views.Response(response)
 
 
 @extend_schema_view(
@@ -446,13 +518,13 @@ class ConductorChatHistoryView(
     queryset = models.Chat.objects.all()
     serializer_class = serializers.ConductorChatHistorySerializer
     pagination_class = pagination.ChatPagination
-    permission_classes = [permissions.IsWhitelisted]
+    permission_classes = [permissions.IsWhitelisted | permissions.HasApiKey]
 
     def get_queryset(self):
         """Return the chat history of the pipeline"""
         q = Q()
         if not self.request.user.is_staff:
-            q &= Q(pipeline__user=self.request.user)
+            q &= Q(user=self.request.user)
         pipeline = models.Pipeline.objects.filter(q).get(id=self.kwargs["pk"])
         return self.queryset.filter(pipeline=pipeline).order_by("-created_at")
 
@@ -464,28 +536,11 @@ class ConductorChatHistoryView(
         return self.get_paginated_response(serializer.data)
 
 
-class ConductorChatPipelineView(
-    generics.RetrieveAPIView,
-    viewsets.GenericViewSet,
-):
-    """View to get the pipeline for running in-browser chat"""
-
-    queryset = models.Pipeline.objects.all()
-    serializer_class = serializers.ConductorChatPipelineSerializer
-    permission_classes = [permissions.IsWhitelisted]
-
-    def get_queryset(self):
-        """Return the pipelines owned by the user"""
-        if self.request.user.is_staff:
-            return self.queryset.all()
-        return self.queryset.filter(user=self.request.user)
-
-
 class ConductorChatSaveChatView(views.APIView):
     """View to save chat"""
 
     serializer_class = serializers.ConductorChatSaveChatSerializer
-    permission_classes = [permissions.IsWhitelisted]
+    permission_classes = [permissions.IsWhitelisted | permissions.HasApiKey]
 
     def patch(self, request: views.Request, pk: int, *args, **kwargs):
         """Save the chat"""
@@ -498,43 +553,55 @@ class ConductorChatSaveChatView(views.APIView):
         models.Chat.objects.create(
             pipeline=pipeline,
             user_message=serializer.validated_data["user_message"],
-            api_message=serializer.validated_data["api_message"],
+            resp_message=serializer.validated_data["resp_message"],
+            exit_code=serializer.validated_data["exit_code"],
         )
 
         return views.Response(serializer.data)
 
 
-class ConductorChatSaveStatesView(views.APIView):
-    """View to save states"""
+class ConductorChatStatesView(views.APIView):
+    """View to get the chat states"""
 
-    serializer_class = serializers.ConductorChatSaveStatesSerializer
-    permission_classes = [permissions.IsWhitelisted]
+    serializer_class = serializers.ConductorChatStatesSerializer
+    permission_classes = [permissions.IsWhitelisted | permissions.HasApiKey]
 
-    def patch(self, request: views.Request, pk: int, *args, **kwargs):
-        """Save the states"""
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    def get(self, request: views.Request, pk: int, *args, **kwargs):
+        """Return the chat states"""
+        pipeline = models.Pipeline.objects.filter(user=request.user).get(id=pk)
 
-        component = models.Component.objects.filter(user=request.user).get(
-            id=pk
+        serializer = self.serializer_class(
+            {
+                "component_states": pipeline.get_components(),
+                "pipeline_state": pipeline.state,
+            }
         )
-
-        # Save the state
-        component.state = serializer.validated_data["state"]
-        component.save()
-
-        # Save the pipeline state
-        pipeline = component.get_pipeline()
-        pipeline.state = serializer.validated_data["pstate"]
-
         return views.Response(serializer.data)
+
+    def post(self, request: views.Request, pk: int, *args, **kwargs):
+        """Return the chat states"""
+        pipeline = models.Pipeline.objects.filter(user=request.user).get(id=pk)
+        components = pipeline.get_components()
+
+        component_states = request.data["component_states"]
+        pipeline_state = request.data["pipeline_state"]
+
+        for component_state in component_states:
+            component = components.get(id=component_state["id"])
+            component.state = component_state["state"]
+            component.save()
+
+        pipeline.state = pipeline_state
+        pipeline.save()
+
+        return views.Response()
 
 
 class ConductorChatOaiChatcmplView(views.APIView):
     """View to call the OpenAI chat completion"""
 
     serializer_class = serializers.ConductorChatOaiChatcmplSerializer
-    permission_classes = [permissions.IsWhitelisted]
+    permission_classes = [permissions.IsWhitelisted | permissions.HasApiKey]
 
     def post(self, request: views.Request, pk: int, *args, **kwargs):
         """Call the OpenAI chat completion"""
@@ -546,21 +613,58 @@ class ConductorChatOaiChatcmplView(views.APIView):
         )
 
         response = None
-        with engine.restricted.oai.init_oai(component):
+        with engine.modules.composer.init_component(component.id):
             try:
                 request_args = serializer.validated_data["request"]
-                chatcmpl_request = engine.oai.api.ChatcmplRequest(
+                chatcmpl_request = engine.modules.oai.api.ChatcmplRequest(
                     **request_args
                 )
             except ValidationError as e:
                 raise exceptions.BadArgumentsException(str(e))
 
-            response = engine.oai.api.chatcmpl(chatcmpl_request)
+            response = engine.modules.oai.api.chatcmpl(chatcmpl_request)
 
         if response is None:
             raise ValueError("response is None")
 
         serializer.validated_data["response"] = response.model_dump()
+        return views.Response(serializer.data)
+
+
+class ConductorChatVaiGeminiProView(views.APIView):
+    """View to call the Gemini Pro chat"""
+
+    serializer_class = serializers.ConductorChatVaiGeminiProSerializer
+    permission_classes = [permissions.IsWhitelisted | permissions.HasApiKey]
+
+    def post(self, request: views.Request, pk: int, *args, **kwargs):
+        """Call the OpenAI chat completion"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        component = models.Component.objects.filter(user=request.user).get(
+            id=pk
+        )
+
+        response = None
+        with engine.modules.composer.init_component(component.id):
+            try:
+                request_args = serializer.validated_data["request"]
+                gemini_pro_request = engine.modules.vai.models.GeminiRequest(
+                    **request_args
+                )
+            except ValidationError as e:
+                raise exceptions.BadArgumentsException(str(e))
+
+            response = engine.modules.vai.api.gemini_pro(gemini_pro_request)
+
+        if response is None:
+            raise ValueError("response is None")
+
+        serializer.validated_data["response"] = google_json.MessageToDict(
+            response._result._pb,
+            preserving_proto_field_name=True
+        )
         return views.Response(serializer.data)
 
 
@@ -628,17 +732,5 @@ class ConductorAdminMakeTemplateView(
 
     queryset = models.Component.objects.all()
     serializer_class = serializers.ConductorAdminMakeTemplateSerializer
-    permission_classes = [rest_permissions.IsAdminUser]
-    http_method_names = ["patch"]
-
-
-class ConductorAdminMakeSafeView(
-    generics.UpdateAPIView,
-    viewsets.GenericViewSet,
-):
-    """View for making a pipeline safe"""
-
-    queryset = models.Pipeline.objects.all()
-    serializer_class = serializers.ConductorAdminMakeSafeSerializer
     permission_classes = [rest_permissions.IsAdminUser]
     http_method_names = ["patch"]

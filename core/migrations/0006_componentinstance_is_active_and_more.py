@@ -4,6 +4,24 @@ import core.models
 from django.db import migrations, models
 
 
+def component_description_default():
+    """Default description for a component"""
+    return {
+        "type": "doc",
+        "content": [
+            {
+                "type": "paragraph",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Description",
+                    },
+                ],
+            },
+        ],
+    }
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -19,6 +37,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='component',
             name='description',
-            field=models.JSONField(default=core.models.Component.component_description_default),
+            field=models.JSONField(default=component_description_default),
         ),
     ]

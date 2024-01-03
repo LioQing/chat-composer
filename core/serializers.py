@@ -33,13 +33,6 @@ class PipelineSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class PipelineRunSerializer(serializers.Serializer):
-    """Serializer for the PipelineRunView"""
-
-    user_message = serializers.CharField(required=True)
-    response = serializers.JSONField(read_only=True)
-
-
 class ComponentInstanceSerializer(serializers.ModelSerializer):
     """Serializer for the ComponentInstance model"""
 

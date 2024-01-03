@@ -9,16 +9,7 @@ router.register(r"model/component", views.ComponentView)
 router.register(r"model/pipeline", views.PipelineView)
 router.register(r"model/component-instance", views.ComponentInstanceView)
 
-run_urlpatterns = [
-    path(
-        "pipeline/run/<int:id>/",
-        views.PipelineRunView.as_view(),
-        name="pipeline-run",
-    ),
-]
-
 urlpatterns = [
     *router.urls,
-    *run_urlpatterns,
     path("ping", views.PingPongView.as_view(), name="ping"),
 ]

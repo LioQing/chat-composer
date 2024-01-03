@@ -4,9 +4,9 @@
 
 ## Modules
 
-- [`api`](./api.md#module-engineoaiapi): OpenAI API functions.
-- [`enums`](./enums.md#module-engineoaienums): Enumerations for OpenAI API.
-- [`models`](./models.md#module-engineoaimodels): Models for OpenAI API.
+- [`api`](./api.md#module-oaiapi): OpenAI API functions.
+- [`enums`](./enums.md#module-oaienums): Enumerations for OpenAI API.
+- [`models`](./models.md#module-oaimodels): Models for OpenAI API.
 
 ## Classes
 

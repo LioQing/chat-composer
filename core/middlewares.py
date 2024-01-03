@@ -3,8 +3,6 @@ from typing import Callable
 
 from django.http import HttpRequest, HttpResponse
 
-from config.logger import logger_config
-
 
 class RequestLogMiddleware:
     """Log the request"""
@@ -15,7 +13,6 @@ class RequestLogMiddleware:
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
         self.get_response = get_response
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logger_config.level)
 
     def __call__(self, request: HttpRequest):
         """Log the request and response"""
@@ -43,6 +40,7 @@ class RequestLogMiddleware:
 
             log_data = log_data | {
                 "response_status": response.status_code,
+                "response_headers": response.headers,
                 "response_body": response_body,
             }
 

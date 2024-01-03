@@ -1,5 +1,10 @@
 """OpenAI API functions."""
 
+# containment: contained
+# import requests
+
+# containment: end
+
 from .models import Chatcmpl, ChatcmplRequest
 
 
@@ -14,7 +19,8 @@ def chatcmpl(request: ChatcmplRequest) -> Chatcmpl:
     Returns:
         models.Chatcmpl: The response from the API.
     """
-    from engine.restricted.oai import (
+    # containment: not contained
+    from engine.modules.oai import (
         create_chatcmpl_models,
         logger,
         openai_chatcmpl,
@@ -32,3 +38,17 @@ def chatcmpl(request: ChatcmplRequest) -> Chatcmpl:
     create_chatcmpl_models(request, response)
 
     return response
+    # containment: else
+    # from modules import composer
+
+    # response = requests.post(
+    #     composer.url(f"conductor/chat/oai/chatcmpl/{composer.component_id()}/"),
+    #     json={"request": request.model_dump()},
+    #     headers=composer.headers(),
+    # )
+    # response.raise_for_status()
+    # response = response.json()["response"]
+    # response = Chatcmpl(**response)
+
+    # return response
+    # containment: end

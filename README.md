@@ -9,13 +9,21 @@ Chat composer project.
 erDiagram
     User {
         Boolean is_whitelisted
+        Text name
+    }
+
+    ApiKey {
+        Text encrypted_key
+        OneToOne(User) user FK
     }
 
     Component {
         ManyToOne(User) user FK
-        Text name
         Text function_name
-        JSON description
+        Text name
+        JSON arguments
+        Text return_type
+        Text description
         Text code
         JSON state
         Boolean is_template
@@ -24,19 +32,19 @@ erDiagram
 
     Pipeline {
         ManyToOne(User) user FK
-        ManyToMany(Component) components FK "through ComponentInstance"
         Text name
+        Text response
         JSON state
+        Text description
         Boolean is_active
-        Boolean is_safe
         DateTime created_at
     }
 
     Chat {
         ManyToOne(Pipeline) pipeline FK
         Text user_message
-        Text api_message
-        Boolean is_first
+        Text resp_message
+        Integer exit_code
         DateTime created_at
     }
 
@@ -86,6 +94,7 @@ erDiagram
         PositiveInteger total_tokens
     }
 
+    User ||--o| ApiKey : generates
     User ||--o{ Pipeline : owns
     User ||--o{ Component : creates
     Component ||--o| ComponentInstance : refers

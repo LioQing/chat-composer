@@ -15,6 +15,7 @@ from pathlib import Path
 
 from config.db import db_config
 from config.django import django_config
+from config.logger import logger_config
 from utils import formatter
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -38,6 +39,8 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "corsheaders",
     "rest_framework",
+    "rest_framework_api_key",
+    "django_grpc_framework",
     "core.apps.CoreConfig",
     "conductor.apps.ConductorConfig",
     "oai.apps.OaiConfig",
@@ -50,10 +53,15 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "rest_auth.middlewares.ApiKeyMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "core.middlewares.RequestLogMiddleware",
+]
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 CORS_ALLOWED_ORIGINS = django_config.cors_allowed_origins
@@ -125,7 +133,7 @@ AUTH_USER_MODEL = "core.User"
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = django_config.time_zone
 
 USE_I18N = True
 
@@ -147,6 +155,7 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_auth.authentication.ApiKeyAuthentication",
     ],
 }
 
@@ -166,12 +175,18 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "ENFORCE_NON_BLANK_FIELDS": True,
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "persistAuthorization": True,
+        "displayOperationId": True,
+    },
 }
 
 # Logging
 
 LOGGING = {
     "version": 1,
+    "disable_existing_loggers": False,
     "formatters": {
         "colored": {
             "()": formatter.ColoredFormatter,
@@ -185,5 +200,6 @@ LOGGING = {
     },
     "root": {
         "handlers": ["console"],
+        "level": logger_config.level,
     },
 }

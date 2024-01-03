@@ -5,6 +5,7 @@ services:
     build: .
     volumes:
       - .:/usr/app
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - ${WEB_PORT}:8000
     env_file:

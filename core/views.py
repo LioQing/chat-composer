@@ -1,5 +1,3 @@
-import logging
-
 from rest_framework import (
     exceptions,
     generics,
@@ -8,9 +6,6 @@ from rest_framework import (
     views,
     viewsets,
 )
-
-import engine.pipeline
-from config.logger import logger_config
 
 from . import models, serializers
 
@@ -183,34 +178,3 @@ class ChatView(
                 " pipeline"
             )
         serializer.save()
-
-
-class PipelineRunView(generics.CreateAPIView, views.APIView):
-    """View to run the pipeline"""
-
-    serializer_class = serializers.PipelineRunSerializer
-    permission_classes = [permissions.IsAdminUser]
-
-    def create(self, request, id: int, *args, **kwargs):
-        """Run the pipeline"""
-        logger = logging.getLogger(__name__)
-        logger.setLevel(logger_config.level)
-
-        try:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            user_message: str = serializer.validated_data["user_message"]
-
-            pipeline: models.Pipeline = models.Pipeline.objects.get(id=id)
-            pipeline_response = engine.pipeline.run(pipeline, user_message)
-
-            serializer.validated_data["response"] = pipeline_response
-            logger.debug("serializer: %s", serializer)
-            return response.Response(serializer.data)
-        except Exception as e:
-            import traceback
-
-            traceback.print_exc()
-            logger = logging.getLogger(__name__)
-            logger.error(e)
-            raise e

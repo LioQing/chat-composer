@@ -1,10 +1,12 @@
 """Models for OpenAI API."""
 
-from typing import Any, Dict, List, Optional
-
+from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, Field, model_serializer
 
+# containment: not contained
 from config.openai import openai_config
+
+# containment: end
 
 from .enums import FinishReason, Role
 
@@ -101,23 +103,14 @@ class Chatcmpl(BaseModel):
 class FunctionCallRequest(BaseModel):
     """Function call for chat completion to call.
 
+    If you wish to use auto or none, simply supply them as strings to the
+    ChatcmplRequest.
+
     Attributes:
-        auto (bool): Whether to automatically call the function.
         name (str): The name of the function to call.
     """
 
-    auto: Optional[bool] = Field(False)
-    name: Optional[str] = Field(None)
-
-    @model_serializer
-    def model_dump(self) -> Dict[str, Any] | str:
-        """Dump the model"""
-        if self.name is not None:
-            return {"name": self.name}
-        if self.auto:
-            return "auto"
-
-        return "none"
+    name: str
 
 
 class Parameter(BaseModel):
@@ -207,13 +200,18 @@ class ChatcmplRequest(BaseModel):
         user (Optional[str]): The user. Defaults to None.
     """
 
+    # containment: not contained
     deployment_id: str = Field(openai_config.deployment)
     model: str = Field(openai_config.model)
+    # containment: else
+    # deployment_id: Optional[str] = Field(None)
+    # model: Optional[str] = Field(None)
+    # containment: end
     messages: List[Message]
     frequency_penalty: float = Field(0.0, ge=-2.0, le=2.0)
-    function_call: FunctionCallRequest = Field(
-        default_factory=FunctionCallRequest
-    )
+    function_call: Optional[
+        Literal["auto", "none"] | FunctionCallRequest
+    ] = Field(None)
     functions: Optional[List[Function]] = Field(None)
     max_tokens: int = Field(2048, gt=0)
     n: int = Field(1)
@@ -226,16 +224,4 @@ class ChatcmplRequest(BaseModel):
 
     def model_dump(self) -> Dict[str, Any]:
         """Dump the model"""
-        dump = super().model_dump()
-
-        if self.functions is None:
-            dump.pop("functions")
-            dump.pop("function_call")
-
-        if self.stop is None:
-            dump.pop("stop")
-
-        if self.user is None:
-            dump.pop("user")
-
-        return dump
+        return super().model_dump(exclude_none=True)

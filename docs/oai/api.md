@@ -8,7 +8,7 @@ OpenAI API functions.
 
 ---
 
-<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L9"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/LioQing/chat-composer/blob/main/engine/oai/api.py#L11"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `chatcmpl`
 
