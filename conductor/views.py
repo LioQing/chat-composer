@@ -1,6 +1,6 @@
 import logging
 
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.http import HttpResponse
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -16,6 +16,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 import engine.modules.oai
 import engine.modules.vai
+import oai.models as oai_models
+import vai.models as vai_models
 from core import models
 from engine.containment import ContainmentArchiveType, containment
 from rest_auth import permissions
@@ -662,8 +664,7 @@ class ConductorChatVaiGeminiProView(views.APIView):
             raise ValueError("response is None")
 
         serializer.validated_data["response"] = google_json.MessageToDict(
-            response._result._pb,
-            preserving_proto_field_name=True
+            response._result._pb, preserving_proto_field_name=True
         )
         return views.Response(serializer.data)
 
@@ -734,3 +735,45 @@ class ConductorAdminMakeTemplateView(
     serializer_class = serializers.ConductorAdminMakeTemplateSerializer
     permission_classes = [rest_permissions.IsAdminUser]
     http_method_names = ["patch"]
+
+
+class ConductorAdminTokenUsageView(
+    generics.ListAPIView,
+    views.APIView,
+):
+    """View for getting the token usage"""
+
+    serializer_class = serializers.ConductorAdminTokenUsageSerializer
+    permission_classes = [rest_permissions.IsAdminUser]
+
+    def get(self, request: views.Request, *args, **kwargs):
+        """Return the token usage"""
+        response = []
+
+        for user in models.User.objects.all():
+            # oai
+            oai_usage = (
+                oai_models.ChatcmplRequest.objects.filter(
+                    component__user=user
+                ).aggregate(total_tokens=Sum("response__usage__total_tokens"))[
+                    "total_tokens"
+                ]
+                or 0
+            )
+
+            # vai
+            vai_usage = (
+                vai_models.GeminiProRequest.objects.filter(
+                    component__user=user
+                ).aggregate(total_tokens=Sum("token_count"))["total_tokens"]
+                or 0
+            )
+
+            response.append(
+                {
+                    "username": user.username,
+                    "usage": {"oai": oai_usage, "vai": vai_usage},
+                }
+            )
+
+        return views.Response(response)

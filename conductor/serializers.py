@@ -332,3 +332,17 @@ class ConductorAdminMakeTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Component
         fields = ("is_template",)
+
+
+class ConductorAdminTokenUsageUserSerializer(serializers.Serializer):
+    """Serializer for the ConductorAdminTokenUsageView"""
+
+    oai = serializers.IntegerField(read_only=True)
+    vai = serializers.IntegerField(read_only=True)
+
+
+class ConductorAdminTokenUsageSerializer(serializers.Serializer):
+    """Serializer for the ConductorAdminTokenUsageView"""
+
+    username = serializers.CharField(read_only=True)
+    usage = ConductorAdminTokenUsageUserSerializer(read_only=True)

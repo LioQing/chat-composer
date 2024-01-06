@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "core.apps.CoreConfig",
     "conductor.apps.ConductorConfig",
     "oai.apps.OaiConfig",
+    "vai.apps.VaiConfig",
     "rest_auth.apps.RestAuthConfig",
 ]
 

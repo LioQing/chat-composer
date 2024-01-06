@@ -23,6 +23,7 @@ def gemini_pro(request: GeminiRequest) -> google_types.GenerateContentResponse:
     # containment: not contained
     from engine.modules.vai import (
         gemini_pro,
+        create_gemini_pro_models,
         logger,
     )
 
@@ -33,6 +34,8 @@ def gemini_pro(request: GeminiRequest) -> google_types.GenerateContentResponse:
     response = gemini_pro(**request)
 
     logger.debug(f"API response: {response}")
+
+    create_gemini_pro_models(request, response)
 
     return response
     # containment: else

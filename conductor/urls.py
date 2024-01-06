@@ -132,4 +132,9 @@ urlpatterns = [
         views.ConductorAdminWhitelistView.as_view(),
         name="conductor-admin-whitelist",
     ),
+    path(
+        "admin/token-usage/",
+        views.ConductorAdminTokenUsageView.as_view(),
+        name="conductor-admin-token-usage",
+    ),
 ]
