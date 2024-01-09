@@ -717,6 +717,8 @@ class ConductorAdminCreateUserView(
         user.set_password(password)
         user.save()
 
+        containment.create_user_container(user)
+
         data = serializer.data
         data["password"] = password
         return views.Response(
